@@ -11027,8 +11027,8 @@ Source: www.kingbright.com</description>
 <part name="GND28" library="supply1" deviceset="GND" device=""/>
 <part name="GND29" library="supply1" deviceset="GND" device=""/>
 <part name="X5" library="pinhead" deviceset="PINHD-1X6" device=""/>
-<part name="IC4" library="v-reg" deviceset="LD117A?*" device="S" technology="12TR" value="LD117AS12"/>
-<part name="IC5" library="v-reg" deviceset="LD117A?*" device="S" technology="33TR" value="LD117AS33"/>
+<part name="IC4" library="v-reg" deviceset="LD117A?*" device="S" technology="12TR" value="AP1117-1.2"/>
+<part name="IC5" library="v-reg" deviceset="LD117A?*" device="S" technology="33TR" value="AP1117-3.3"/>
 <part name="X2" library="pinhead" deviceset="PINHD-1X3" device=""/>
 <part name="P+2" library="supply1" deviceset="+5V" device=""/>
 <part name="GND30" library="supply1" deviceset="GND" device=""/>
@@ -11229,10 +11229,13 @@ Source: www.kingbright.com</description>
 <instance part="GND29" gate="1" x="167.64" y="76.2"/>
 <instance part="X5" gate="A" x="177.8" y="83.82"/>
 <instance part="IC4" gate="G$1" x="93.98" y="-7.62" smashed="yes" rot="MR0">
-<attribute name="NAME" x="96.52" y="-15.24" size="1.778" layer="95" rot="MR180"/>
-<attribute name="VALUE" x="96.52" y="-17.78" size="1.778" layer="96" rot="MR180"/>
+<attribute name="NAME" x="88.9" y="0" size="1.778" layer="95" rot="MR180"/>
+<attribute name="VALUE" x="88.9" y="-2.54" size="1.778" layer="96" rot="MR180"/>
 </instance>
-<instance part="IC5" gate="G$1" x="2.54" y="-40.64"/>
+<instance part="IC5" gate="G$1" x="2.54" y="-40.64" smashed="yes">
+<attribute name="NAME" x="-2.54" y="-34.29" size="1.778" layer="95"/>
+<attribute name="VALUE" x="-2.54" y="-36.83" size="1.778" layer="96"/>
+</instance>
 <instance part="X2" gate="A" x="147.32" y="116.84" rot="R180"/>
 <instance part="P+2" gate="1" x="104.14" y="-2.54" smashed="yes" rot="MR0">
 <attribute name="VALUE" x="105.41" y="-1.27" size="1.778" layer="96" rot="MR180"/>
@@ -11240,7 +11243,7 @@ Source: www.kingbright.com</description>
 <instance part="GND30" gate="1" x="93.98" y="-27.94" rot="MR0"/>
 <instance part="GND31" gate="1" x="2.54" y="-58.42"/>
 <instance part="P+3" gate="1" x="-7.62" y="-35.56" smashed="yes">
-<attribute name="VALUE" x="-6.35" y="-35.56" size="1.778" layer="96"/>
+<attribute name="VALUE" x="-10.16" y="-34.29" size="1.778" layer="96"/>
 </instance>
 <instance part="GND32" gate="1" x="-68.58" y="99.06"/>
 <instance part="C20" gate="G$1" x="86.36" y="109.22" smashed="yes">
