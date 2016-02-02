@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 -- Company: 
--- Engineer: 
+-- Engineer:       Thoralt Franz
 -- 
 -- Create Date:    21:18:27 03/02/2015 
 -- Design Name: 
@@ -29,57 +29,78 @@ use IEEE.std_logic_unsigned."<=";
 use IEEE.std_logic_unsigned.">=";
 
 entity KCVIDEO_INTERFACE is
-    Port ( CLK               : in  STD_LOGIC;
-		   KC_CLK            : in  STD_LOGIC;
-           R                 : in  STD_LOGIC;
-           G                 : in  STD_LOGIC;
-           B                 : in  STD_LOGIC;
-           EZ                : in  STD_LOGIC;
-           EX                : in  STD_LOGIC;
-           HSYNC             : in  STD_LOGIC;
-           VSYNC             : in  STD_LOGIC;
-           nRESET            : in  STD_LOGIC;
+    Port ( CLK               : in  STD_LOGIC; -- master clock input 108 MHz
+		   KC_CLK            : in  STD_LOGIC; -- external video clock 7.09 MHz
+           R                 : in  STD_LOGIC; -- red pixel color
+           G                 : in  STD_LOGIC; -- green pixel color
+           B                 : in  STD_LOGIC; -- blue pixel color
+           EZ                : in  STD_LOGIC; -- foreground/background bit
+           EX                : in  STD_LOGIC; -- intensity bit
+           HSYNC             : in  STD_LOGIC; -- horizontal sync input
+           VSYNC             : in  STD_LOGIC; -- vertical sync input
+           nRESET            : in  STD_LOGIC; -- reset input
            TEST1             : out STD_LOGIC;
            TEST2             : out STD_LOGIC;
-           FIFO_WR           : out STD_LOGIC;
-           FIFO_FULL         : in  STD_LOGIC;
-		   FRAMESYNC         : in  STD_LOGIC;
-           KCVIDEO_DATA      : out STD_LOGIC_VECTOR (30 downto 0);
-		   ROM_ADDR          : out STD_LOGIC_VECTOR (13 downto 0);
-		   ROM_DATA          : in  STD_LOGIC);
+           FIFO_WR           : out STD_LOGIC; -- SRAM FIFO write output
+           FIFO_FULL         : in  STD_LOGIC; -- SRAM FIFO full input
+		   FRAMESYNC         : in  STD_LOGIC; -- start of frame from VGA module for screensaver
+           KCVIDEO_DATA      : out STD_LOGIC_VECTOR (30 downto 0); -- SRAM address and data
+		   ROM_ADDR          : out STD_LOGIC_VECTOR (13 downto 0); -- screensaver ROM address
+		   ROM_DATA          : in  STD_LOGIC);                     -- screensaver data input
 end KCVIDEO_INTERFACE;
 
 architecture Behavioral of KCVIDEO_INTERFACE is
 
+-- screensaver position after reset
 constant LOGO_X : integer := 29;
 constant LOGO_Y : integer := 59;
+
+-- screensaver dimensions
 constant LOGO_W : integer := 128;
 constant LOGO_H : integer := 128;
 
+-- number of current pixel in current dataword (we have 3 pixels per word)
 type pixel_count is (pixel1, pixel2, pixel3);
 signal pixel               : pixel_count;
+
+-- X and Y position of incoming pixel data
 signal X                    : STD_LOGIC_VECTOR(10 downto 0) := (others => '0');
 signal Y                    : STD_LOGIC_VECTOR(10 downto 0) := (others => '0');
+
+-- current SRAM address
 signal A                    : STD_LOGIC_VECTOR(15 downto 0);
+
+-- edge detectors and filters for clock, HSYNC, VSYNC
 signal KC_CLK_edge_detector : STD_LOGIC_VECTOR(2 downto 0);
 signal KC_CLK_glitch_filter : STD_LOGIC_VECTOR(3 downto 0);
 signal HSYNC_edge_detector  : STD_LOGIC_VECTOR(2 downto 0);
 signal HSYNC_glitch_filter  : STD_LOGIC_VECTOR(7 downto 0);
 signal VSYNC_edge_detector  : STD_LOGIC_VECTOR(2 downto 0);
 signal VSYNC_glitch_filter  : STD_LOGIC_VECTOR(7 downto 0);
+
+-- internal frame start flag, gets set on falling edge of VSYNC
 signal FRAME_START          : STD_LOGIC;
+
+-- current screensaver data address
 signal ROM_ADDRESS          : STD_LOGIC_VECTOR(13 downto 0);
+
+-- screensaver position and movement
 signal LOGO_POSITION_X      : STD_LOGIC_VECTOR(8 downto 0);
 signal LOGO_POSITION_Y      : STD_LOGIC_VECTOR(7 downto 0);
 signal LOGO_DIRECTION_X     : STD_LOGIC;
 signal LOGO_DIRECTION_Y     : STD_LOGIC;
-signal SCREENSAVER_DONE     : STD_LOGIC;
---signal LOGO_BG              : STD_LOGIC_VECTOR(3 downto 0);
---signal LOGO_FG              : STD_LOGIC_VECTOR(3 downto 0);
 
---signal HS, VS, CK : STD_LOGIC;
+-- gets set after screensaver has been completely written to SRAM
+signal SCREENSAVER_DONE     : STD_LOGIC;
+
+-- counter for screensaver activation
 signal TIMEOUT : STD_LOGIC_VECTOR(27 downto 0) := (others => '0');
+
+-- clock prescaler for screensaver: divides clock by two to
+-- allow pixel data being fetched from ROM
 signal prescaler : STD_LOGIC := '0';
+
+
 begin
 
 	process(CLK, nRESET, R, G, B, EZ, EX)
@@ -88,7 +109,7 @@ begin
 		variable HSYNC_filtered : STD_LOGIC;
 		variable VSYNC_filtered : STD_LOGIC;
 	begin
-
+		-- assign video inputs to color variable for easier access
 		color(0) := not(B);
 		color(1) := not(R);
 		color(2) := not(G);
@@ -123,17 +144,18 @@ begin
 			if not(TIMEOUT = 216000000) then 
 				TIMEOUT <= TIMEOUT + 1;
 			else
-				-- move logo
+				-- move logo on every frame start
 				if FRAMESYNC = '1' then
 					SCREENSAVER_DONE <= '0';
 					if LOGO_DIRECTION_X = '1' then
+						-- move in positive X direction
 						if LOGO_POSITION_X + LOGO_W < 319 then
 							LOGO_POSITION_X <= LOGO_POSITION_X + 1;
 						else
 							LOGO_DIRECTION_X <= '0';
-	--						LOGO_BG <= LOGO_BG + 1;
 						end if;
 					else
+						-- move in negative X direction
 						if LOGO_POSITION_X > 0 then
 							LOGO_POSITION_X <= LOGO_POSITION_X - 1;
 						else
@@ -142,13 +164,14 @@ begin
 					end if;
 
 					if LOGO_DIRECTION_Y = '1' then
+						-- move in positive Y direction
 						if LOGO_POSITION_Y + LOGO_H < 255 then
 							LOGO_POSITION_Y <= LOGO_POSITION_Y + 1;
 						else
 							LOGO_DIRECTION_Y <= '0';
-	--						LOGO_FG <= LOGO_FG + 1;
 						end if;
 					else
+						-- move in negative Y direction
 						if LOGO_POSITION_Y > 0 then
 							LOGO_POSITION_Y <= LOGO_POSITION_Y - 1;
 						else
@@ -161,7 +184,7 @@ begin
 				-- one additional cycle to deliver next pixel
 				prescaler <= not(prescaler);
 
-				-- write screen saver image to RAM
+				-- write screen saver pixels to RAM
 				if SCREENSAVER_DONE = '0' and FIFO_FULL = '0' and prescaler = '1' then
 					
 					-- insert logo at position LOGO_POSITION_X, LOGO_POSITION_Y
@@ -271,13 +294,9 @@ begin
 					X <= X + 1;
 				end if;
 			end if;
---			if KC_CLK_edge_detector(2 downto 1) = "10" then -- DEBUG
---				CK <= '1'; -- DEBUG
---			end if; -- DEBUG
 			
 			-- check for falling edge on HSYNC
 			if HSYNC_edge_detector(2 downto 1) = "10" then
---				HS <= '0'; -- DEBUG
 				if FRAME_START = '1' then
 					Y <= (others => '0');
 					A <= (others => '0');
@@ -289,22 +308,17 @@ begin
 				X <= (others => '0');
 				pixel <= pixel1;
 			end if;
---			if HSYNC_edge_detector(2 downto 1) = "01" then -- DEBUG
---				HS <= '1'; -- DEBUG
---			end if; -- DEBUG
 			
 			-- check for falling edge on VSYNC
 			if VSYNC_edge_detector(2 downto 1) = "10" then
---				VS <= '0'; -- DEBUG
 				FRAME_START <= '1';
 				TIMEOUT <= (others => '0');
 			end if;
---			if VSYNC_edge_detector(2 downto 1) = "01" then -- DEBUG
---				VS <= '1'; -- DEBUG
---			end if; -- DEBUG
 
-			-- glitch filter 
+			-- glitch filter, necessary due to capacitive coupling of some
+			-- signal lines
 			-- (does not delay falling edge, only delays rising edge)
+			-- only accepts H level if it persists for more than 4 or 8 clock cycles
 			KC_CLK_glitch_filter <= KC_CLK_glitch_filter(2 downto 0) & KC_CLK;
 			HSYNC_glitch_filter <= HSYNC_glitch_filter(6 downto 0) & HSYNC;
 			VSYNC_glitch_filter <= VSYNC_glitch_filter(6 downto 0) & VSYNC;
@@ -333,4 +347,3 @@ begin
 		end if;
 	end process;
 end Behavioral;
-

@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
 -- Company: 
--- Engineer: 
+-- Engineer:       Thoralt Franz
 -- 
 -- Create Date:    18:35:41 02/19/2015 
 -- Design Name: 
@@ -240,6 +240,11 @@ begin
 --				else
 
 					-- color encoding: map 1 bit R+G+B+EX+EZ to 4 bit RGB
+					-- input data is 5 bits:
+					--
+					-- +--+--+--+--+--+
+					-- |EZ|EX|G |R |B |
+					-- +--+--+--+--+--+
 					case DATA(4 downto 0) is
 					    --   "00xxx" => background, no highlight
 						when "00000" =>  rr := "0000"; gg := "0000"; bb := "0000"; --  0 schwarz
@@ -271,7 +276,8 @@ begin
 						--   "01xxx" => undefined
 						when others  =>  rr := "0000"; gg := "0000"; bb := "0000"; --  0 schwarz
 					end case;
---					if SCANLINES = '1' and (LINE_MULTIPLICATOR = 3 or SUBPIXEL_COUNTER(1 downto 0) = 0) then
+
+					-- scan line effect: darken every 4th line to 3/4 brightness level
 					if SCANLINES = '1' and LINE_MULTIPLICATOR = 3 then
 						R <= REDUCE_BRIGHTNESS(rr, 3, 4); 
 						G <= REDUCE_BRIGHTNESS(gg, 3, 4); 
@@ -284,8 +290,8 @@ begin
 --				end if;
 				
 				-- do sub pixel counting:
-				-- * divide pixel clock by 4 (change pixel only every 4 clock cycles)
-				-- * shift data word containing 4 pixels every 4 clocks
+				--   divide pixel clock by 4 (change pixel only every 4 clock cycles)
+				--   shift data word containing 15 bits (3 pixels) every 4 clocks
 				if not(SUBPIXEL_COUNTER = 3) then
 					SUBPIXEL_COUNTER <= SUBPIXEL_COUNTER + 1;
 				else
@@ -293,19 +299,19 @@ begin
 					SUBPIXEL_COUNTER <= (others => '0');
 
 					-- switch to next pixel:
-					-- every 4 VGA pixels shift DATA right by one 5-bit-nibble
+					-- shift DATA right by one 5-bit-nibble every 4 VGA pixels
 					-- -> next pixel will be placed in DATA(4 downto 0),
 					if not(NIBBLE_COUNTER = 2) then
 						DATA(9 downto 0) <= DATA(14 downto 5);
 						NIBBLE_COUNTER <= NIBBLE_COUNTER + 1;
 					else
 						-- all pixels in current dataword have been processed
-						-- -> read next data word from FIFO
+						-- -> get next data word from FIFO
 						DATA <= VGA_DATA;
-						
-						-- request next data word from FIFO
-						FIFO_RD <= '1';
 						NIBBLE_COUNTER <= (others => '0');
+						
+						-- trigger new from FIFO request
+						FIFO_RD <= '1';
 					end if;
 				end if;
 			else
@@ -329,7 +335,7 @@ begin
 					else
 						-- switch address to next line after 4th repetition
 						LINE_MULTIPLICATOR <= (others => '0');
-						ADDR <= ADDR + 107;
+						ADDR <= ADDR + 107; -- 320 pixels / 3 pixels per data word
 					end if;
 				end if;
 				
