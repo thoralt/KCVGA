@@ -1,13 +1,2 @@
 # KCVGA
-VGA interface for vintage KC85 computers
-
-#### Wiki
-http://thoralt.de/kcvga/index.php/Hauptseite
-
-#### Blog
-[Part 1](http://thoralt.de/content-de/Projekte/Eintrage/2012/1/22_VGA_am_KC85_4_Teil_1.html)
-
-[Part 2](http://thoralt.de/content-de/Projekte/Eintrage/2015/3/29_VGA_am_KC85_4_Teil_2.html)
-
-![Rendered KCVGA](https://github.com/thoralt/KCVGA/blob/master/PCB/KCVGA%201.1.png)
-
+This project aims to convert the video output of old KC85/4 computer systems into a VGA signal for display on a modern monitor. The video signals from the host computer are sampled from the mainboard into an SRAM using an Xilinx Spartan 3A FPGA. The FPGA also generates the VGA video signal from the sampled image. A PIC32MX250F128B contains the FPGA bitstream and loads it during power-up. Additionally, the PIC32 serves as a USB bridge to the FPGA.
