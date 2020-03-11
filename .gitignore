@@ -1,0 +1,7 @@
+/PIC32/KCVGA.X/dist/
+/PIC32/KCVGA.X/build/
+/PIC32/firmware/KCVGA.X/build/
+/PIC32/firmware/KCVGA.X/dist/
+*.icloud
+.DS_Store
+
