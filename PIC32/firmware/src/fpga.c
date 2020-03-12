@@ -3,13 +3,6 @@
 
 FPGA_DATA fpgaData;
 
-
-void FPGA_Initialize(void)
-{
-    /* Place the App state machine in its initial state. */
-    fpgaData.state = FPGA_STATE_INIT;
-}
-
 void blink(int times)
 {
     int i;
@@ -23,13 +16,13 @@ void blink(int times)
     vTaskDelay(1000/portTICK_PERIOD_MS);
 }
 
-/**
+/******************************************************************************
  * Starts the FPGA configure process by giving PROG_B a 10 us L pulse.
  * @return FPGA_ERROR_OK
  * @return FPGA_ERROR_INIT_B_NOT_LOW - FPGA did not set INIT_B to L
  * @return FPGA_ERROR_INIT_B_NOT_HIGH - FPGA did not set INIT_B to H after 
  * 500 us (did not finish houseclearing)
- */
+ *****************************************************************************/
 FPGA_ERROR FPGA_ConfigureBegin()
 {
     // First, set PROG_B to L, this initiates the configuration process.
@@ -50,6 +43,45 @@ FPGA_ERROR FPGA_ConfigureBegin()
     return FPGA_ERROR_OK;
 }
 
+/******************************************************************************
+ * Starts transmission of the FPGA bitstream using SPI
+ *****************************************************************************/
+void FPGA_ConfigureStartBitstream()
+{
+    SPI1_Write((void*)FPGA_bitstream, FPGA_bitstream_len);
+}
+
+/******************************************************************************
+ * Checks if the configuration process is complete
+ * @return true if complete, false otherwise
+ *****************************************************************************/
+bool FPGA_IsConfigureComplete()
+{
+    return !SPI1_IsBusy();
+}
+
+/******************************************************************************
+ * Should be called after successful FPGA configuration. Disables SPI and
+ * does necessary cleanup.
+ *****************************************************************************/
+void FPGA_ConfigureEnd()
+{
+    // disable SPI to free PINs for FPGA communication
+    SPI1CON = 0;
+}
+
+/******************************************************************************
+ * 
+ *****************************************************************************/
+void FPGA_Initialize(void)
+{
+    /* Place the App state machine in its initial state. */
+    fpgaData.state = FPGA_STATE_INIT;
+}
+
+/******************************************************************************
+ * 
+ *****************************************************************************/
 void FPGA_Tasks(void)
 {
     switch(fpgaData.state)
@@ -60,13 +92,15 @@ void FPGA_Tasks(void)
             {
                 case FPGA_ERROR_OK:
                     // start the SPI transmission
-                    SPI1_Write((void*)FPGA_bitstream, FPGA_bitstream_len);
+                    FPGA_ConfigureStartBitstream();
                     fpgaData.state = FPGA_STATE_CONFIGURING;
                     break;
                 case FPGA_ERROR_INIT_B_NOT_HIGH:
+                    // endless loop: blink two times and retry
                     blink(2);
                     break;
                 case FPGA_ERROR_INIT_B_NOT_LOW:
+                    // endless loop: blink three times and retry
                     blink(3);
                     break;
                 default:
@@ -77,7 +111,16 @@ void FPGA_Tasks(void)
         
         case FPGA_STATE_CONFIGURING:
         {
-            if(SPI1_IsBusy())
+            // check if the bitstream has been transferred
+            if(FPGA_IsConfigureComplete())
+            {
+                // cleanup
+                FPGA_ConfigureEnd();
+                
+                // switch to next state
+                fpgaData.state = FPGA_STATE_IDLE;
+            }
+            else
             {
                 // flicker the LED while SPI is transferring the bitstream
                 LED_Set();
@@ -85,22 +128,16 @@ void FPGA_Tasks(void)
                 LED_Clear();
                 vTaskDelay(25/portTICK_PERIOD_MS);
             }
-            else
-            {
-                // disable SPI to free PINs for FPGA communication
-                SPI1CON = 0;
-                fpgaData.state = FPGA_STATE_IDLE;
-            }
             break;
         }
 
         case FPGA_STATE_IDLE:
         {
+            // blink once per second
             LED_Set();
             vTaskDelay(25/portTICK_PERIOD_MS);
             LED_Clear();
             vTaskDelay(975/portTICK_PERIOD_MS);
-            
             break;
         }
 
