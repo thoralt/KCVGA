@@ -99,6 +99,16 @@ void _FPGA_Tasks(  void *pvParameters  )
         FPGA_Tasks();
     }
 }
+/* Handle for the CDC_Tasks. */
+TaskHandle_t xCDC_Tasks;
+
+void _CDC_Tasks(  void *pvParameters  )
+{
+    while(1)
+    {
+        CDC_Tasks();
+    }
+}
 
 
 
@@ -148,7 +158,7 @@ void SYS_Tasks ( void )
         /* Create OS Thread for APP_Tasks. */
     xTaskCreate((TaskFunction_t) _APP_Tasks,
                 "APP_Tasks",
-                1024,
+                512,
                 NULL,
                 1,
                 &xAPP_Tasks);
@@ -160,6 +170,14 @@ void SYS_Tasks ( void )
                 NULL,
                 1,
                 &xFPGA_Tasks);
+
+    /* Create OS Thread for CDC_Tasks. */
+    xTaskCreate((TaskFunction_t) _CDC_Tasks,
+                "CDC_Tasks",
+                1024,
+                NULL,
+                1,
+                &xCDC_Tasks);
 
 
 

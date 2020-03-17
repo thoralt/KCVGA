@@ -25,16 +25,16 @@ use IEEE.std_logic_unsigned."-";
 use IEEE.std_logic_unsigned."=";
 
 entity SRAM_INTERFACE is
-    Port ( VGA_ADDR           : in    STD_LOGIC_VECTOR (15 downto 0); -- address requested from VGA module
+    Port ( VGA_ADDR           : in    STD_LOGIC_VECTOR (16 downto 0); -- address requested from VGA module
            VGA_DATA           : out   STD_LOGIC_VECTOR (14 downto 0); -- data out to VGA module
            VGA_ADDR_WR        : in    STD_LOGIC;                      -- VGA address write input
            VGA_FIFO_WR        : out   STD_LOGIC;                      -- VGA FIFO write output
            VGA_FIFO_FULL      : in    STD_LOGIC;                      -- VGA FIFO full input
            VGA_FIFO_RST       : out   STD_LOGIC;                      -- VGA FIFO reset output
-           KCVIDEO_DATA       : in    STD_LOGIC_VECTOR (30 downto 0); -- KCVIDEO address and data input
+           KCVIDEO_DATA       : in    STD_LOGIC_VECTOR (31 downto 0); -- KCVIDEO address and data input
 		   KCVIDEO_FIFO_RD    : out   STD_LOGIC;                      -- KCVIDEO FIFO read input
 		   KCVIDEO_FIFO_EMPTY : in    STD_LOGIC;                      -- KCVIDEO FIFO empty input
-           A                  : out   STD_LOGIC_VECTOR (15 downto 0); -- SRAM address output
+           A                  : out   STD_LOGIC_VECTOR (16 downto 0); -- SRAM address output
            D                  : inout STD_LOGIC_VECTOR (15 downto 0); -- SRAM data output
            nCE                : out   STD_LOGIC;                      -- SRAM chip enable
            nOE                : out   STD_LOGIC;                      -- SRAM output enable
@@ -68,7 +68,7 @@ signal current_state        : SRAM_INTERFACE_STATE := idle;
 signal VGA_ADDR_WR_previous : STD_LOGIC;
 
 -- current address being read from SRAM
-signal CURRENT_VGA_ADDR     : STD_LOGIC_VECTOR(15 downto 0);
+signal CURRENT_VGA_ADDR     : STD_LOGIC_VECTOR(16 downto 0);
 
 -- counter for remaining data words of current SRAM->VGA FIFO transfer
 signal VGA_DATA_COUNTER     : STD_LOGIC_VECTOR(6 downto 0);
@@ -161,17 +161,20 @@ begin
 			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			elsif current_state = KCVIDEO_WRITE2 then
 				-- fetch address and data from FIFO
-				A <= KCVIDEO_DATA(30 downto 15);
+				A <= KCVIDEO_DATA(31 downto 15);
 				D <= '0' & KCVIDEO_DATA(14 downto 0); -- highest bit always 0 (unused)
 				
+				-- A <= "0000000000000000";
+				-- D <= "0100010000010001";
+
 				-- data layout in FIFO:
 				--
-				-- |<------ 16 bits address ------>|<-pxl 2>-|<-pxl 1>-|<-pxl 0>-|
-				-- |                               |         |         |         |
-				-- |                               |         |         |         |
-				-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-				-- |a|a|a|a|a|a|a|a|a|a|a|a|a|a|a|a|2|2|2|2|2|1|1|1|1|1|0|0|0|0|0|
-				-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+				-- |<------- 17 bits address ------->|<-pxl 2>-|<-pxl 1>-|<-pxl 0>-|
+				-- |                                 |         |         |         |
+				-- |                                 |         |         |         |
+				-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+				-- |a|a|a|a|a|a|a|a|a|a|a|a|a|a|a|a|a|2|2|2|2|2|1|1|1|1|1|0|0|0|0|0|
+				-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 				
 				-- data layout in SRAM:
 				--
@@ -209,25 +212,20 @@ begin
 			-- VGA_READ2
 			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			elsif current_state = VGA_READ2 then
---				if    CURRENT_VGA_ADDR =     1 or CURRENT_VGA_ADDR =   215 then
---					VGA_DATA <= "0111111111111111";
---				elsif CURRENT_VGA_ADDR =   108 then
---					VGA_DATA <= "0111110000011111";
---				elsif CURRENT_VGA_ADDR =    80 or CURRENT_VGA_ADDR =   320 then
---					VGA_DATA <= "0000000000000000";
---				elsif CURRENT_VGA_ADDR =   160 or CURRENT_VGA_ADDR =   240 then
---					VGA_DATA <= "0000111111110000";
---				elsif CURRENT_VGA_ADDR = 20161 or CURRENT_VGA_ADDR = 20401 then
---					VGA_DATA <= "1010101010101010";
---				elsif CURRENT_VGA_ADDR = 20241 or CURRENT_VGA_ADDR = 20321 then
---					VGA_DATA <= "1010000000001010";
---				elsif CURRENT_VGA_ADDR = 20240 or CURRENT_VGA_ADDR = 20480 then
---					VGA_DATA <= "0000000000000000";
---				elsif CURRENT_VGA_ADDR = 20320 or CURRENT_VGA_ADDR = 20400 then
---					VGA_DATA <= "0000101010100000";
---				else
+
+				-- DEBUG
+				-- if CURRENT_VGA_ADDR = 1 then -- DEBUG
+				-- 	VGA_DATA <= "000000000011111"; -- DEBUG
+				-- elsif CURRENT_VGA_ADDR = 107 then -- DEBUG
+				-- 	VGA_DATA <= "000001111100000"; -- DEBUG
+				-- elsif CURRENT_VGA_ADDR = 27286 then -- DEBUG
+				-- 	VGA_DATA <= "000000000011111"; -- DEBUG
+				-- elsif CURRENT_VGA_ADDR = 27392 then -- DEBUG
+				-- 	VGA_DATA <= "000001111100000"; -- DEBUG
+				-- else -- DEBUG
 					VGA_DATA <= D(14 downto 0);
---				end if;
+				-- end if; -- DEBUG
+
 				VGA_FIFO_WR <= '1'; -- write to FIFO
 
 				-- data transfer complete?

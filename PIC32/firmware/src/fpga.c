@@ -25,6 +25,11 @@ void blink(int times)
  *****************************************************************************/
 FPGA_ERROR FPGA_ConfigureBegin()
 {
+    SPI1_Initialize();
+
+    // deassert FPGA reset pin
+    FPGA_RESET_Set();
+
     // First, set PROG_B to L, this initiates the configuration process.
     // The FPGA should answer with INIT_B going to L almost instantly. If not,
     // return FPGA_ERROR_INIT_B_NOT_LOW.
@@ -46,33 +51,39 @@ FPGA_ERROR FPGA_ConfigureBegin()
 /******************************************************************************
  * Starts transmission of the FPGA bitstream using SPI
  *****************************************************************************/
-void FPGA_ConfigureStartBitstream()
+
+void FPGA_ConfigureWriteBuffer(void *buffer, size_t length)
 {
-    SPI1_Write((void*)FPGA_bitstream, FPGA_bitstream_len);
+    SPI1_Write(buffer, length);
 }
 
 /******************************************************************************
  * Checks if the configuration process is complete
  * @return true if complete, false otherwise
  *****************************************************************************/
-bool FPGA_IsConfigureComplete()
+bool FPGA_ConfigureIsBusy()
 {
-    return !SPI1_IsBusy();
+    return SPI1_IsBusy();
 }
 
+
 /******************************************************************************
- * Should be called after successful FPGA configuration. Disables SPI and
- * does necessary cleanup.
+ * Should be called after successful FPGA configuration. Disables SPI, resets
+ * the FPGA and does necessary cleanup.
  *****************************************************************************/
 void FPGA_ConfigureEnd()
 {
     // disable SPI to free PINs for FPGA communication
     SPI1CON = 0;
+    
+    // create FPGA reset pulse
+    FPGA_RESET_Clear();
+    wait_us(1);
+    FPGA_RESET_Set();
 }
 
 /******************************************************************************
- * 
- *****************************************************************************/
+ *  *****************************************************************************/
 void FPGA_Initialize(void)
 {
     /* Place the App state machine in its initial state. */
@@ -92,7 +103,7 @@ void FPGA_Tasks(void)
             {
                 case FPGA_ERROR_OK:
                     // start the SPI transmission
-                    FPGA_ConfigureStartBitstream();
+                    FPGA_ConfigureWriteBuffer((void*)FPGA_bitstream, FPGA_bitstream_len);
                     fpgaData.state = FPGA_STATE_CONFIGURING;
                     break;
                 case FPGA_ERROR_INIT_B_NOT_HIGH:
@@ -112,7 +123,7 @@ void FPGA_Tasks(void)
         case FPGA_STATE_CONFIGURING:
         {
             // check if the bitstream has been transferred
-            if(FPGA_IsConfigureComplete())
+            if(!FPGA_ConfigureIsBusy())
             {
                 // cleanup
                 FPGA_ConfigureEnd();

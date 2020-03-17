@@ -22,7 +22,7 @@
 *     devices, or systems.  Use in such applications are expressly             *
 *     prohibited.                                                              *
 *                                                                              *
-*     (c) Copyright 1995-2015 Xilinx, Inc.                                     *
+*     (c) Copyright 1995-2020 Xilinx, Inc.                                     *
 *     All rights reserved.                                                     *
 *******************************************************************************/
 // You must compile the wrapper file FIFO.v when simulating
@@ -49,10 +49,10 @@ module FIFO(
 
 input clk;
 input rst;
-input [30 : 0] din;
+input [31 : 0] din;
 input wr_en;
 input rd_en;
-output [30 : 0] dout;
+output [31 : 0] dout;
 output full;
 output empty;
 
@@ -86,7 +86,7 @@ output empty;
     .C_COUNT_TYPE(0),
     .C_DATA_COUNT_WIDTH(9),
     .C_DEFAULT_VALUE("BlankString"),
-    .C_DIN_WIDTH(31),
+    .C_DIN_WIDTH(32),
     .C_DIN_WIDTH_AXIS(1),
     .C_DIN_WIDTH_RACH(32),
     .C_DIN_WIDTH_RDCH(64),
@@ -94,7 +94,7 @@ output empty;
     .C_DIN_WIDTH_WDCH(64),
     .C_DIN_WIDTH_WRCH(2),
     .C_DOUT_RST_VAL("0"),
-    .C_DOUT_WIDTH(31),
+    .C_DOUT_WIDTH(32),
     .C_ENABLE_RLOCS(0),
     .C_ENABLE_RST_SYNC(1),
     .C_ERROR_INJECTION_TYPE(0),
@@ -215,7 +215,7 @@ output empty;
     .C_USE_COMMON_OVERFLOW(0),
     .C_USE_COMMON_UNDERFLOW(0),
     .C_USE_DEFAULT_SETTINGS(0),
-    .C_USE_DOUT_RST(1),
+    .C_USE_DOUT_RST(0),
     .C_USE_ECC(0),
     .C_USE_ECC_AXIS(0),
     .C_USE_ECC_RACH(0),

@@ -31,9 +31,11 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity PIC32_INTERFACE is
     Port ( CLK   : in     STD_LOGIC;
-			  nRESET: in     STD_LOGIC;
-			  A     : in     STD_LOGIC_VECTOR (1 downto 0);
+		   nRESET: in     STD_LOGIC;
+		   A     : in     STD_LOGIC_VECTOR (1 downto 0);
            D     : inout  STD_LOGIC_VECTOR (7 downto 0);
+		   SRAM_A: in     STD_LOGIC_VECTOR (15 downto 0);
+           SRAM_D: inout  STD_LOGIC_VECTOR (15 downto 0);
            nCS   : in     STD_LOGIC;
            nWR   : in     STD_LOGIC;
            nRD   : in     STD_LOGIC);
@@ -41,14 +43,14 @@ end PIC32_INTERFACE;
 
 architecture Behavioral of PIC32_INTERFACE is
 
-signal data_buffer0 : std_logic_vector(7 downto 0) := (others=>'0');
-signal data_buffer1 : std_logic_vector(7 downto 0) := (others=>'0');
-signal data_buffer2 : std_logic_vector(7 downto 0) := (others=>'0');
-signal data_buffer3 : std_logic_vector(7 downto 0) := (others=>'0');
-signal D_buffer     : std_logic_vector(7 downto 0) := (others=>'0');
+-- signal data_buffer0 : std_logic_vector(7 downto 0) := (others=>'0');
+-- signal data_buffer1 : std_logic_vector(7 downto 0) := (others=>'0');
+-- signal data_buffer2 : std_logic_vector(7 downto 0) := (others=>'0');
+-- signal data_buffer3 : std_logic_vector(7 downto 0) := (others=>'0');
+-- signal D_buffer     : std_logic_vector(7 downto 0) := (others=>'0');
 
-signal nRD_previous : STD_LOGIC; -- vorheriger Zustand von nRD
-signal OE : STD_LOGIC; -- internes Signal Output Enable
+-- signal nRD_previous : STD_LOGIC; -- vorheriger Zustand von nRD
+-- signal OE : STD_LOGIC; -- internes Signal Output Enable
 
 begin
 	--				D <= std_logic_vector(to_unsigned(data_buffer0, D'length));
@@ -57,33 +59,47 @@ begin
 	process(nRESET, CLK)
 	begin
 		if nRESET = '0' then
-			OE <= '0';
-			nRD_previous <= '1';
+			D <= (others => 'Z');
+			-- OE <= '0';
+			-- nRD_previous <= '1';
 		elsif rising_edge(CLK) then
-			nRD_previous <= nRD; -- wird erst im nächsten Takt sichtbar
-			if nCS = '0' and nRD = '0' and nRD_previous = '1' then
-				OE <= '1';
-				case A is
-					when "00" =>		D_buffer <= data_buffer0;
-					when "01" =>		D_buffer <= data_buffer1;
-					when "10" =>		D_buffer <= data_buffer2;
-					when "11" => 		D_buffer <= data_buffer3;
-					when others =>		OE <= '0';
-				end case;
-			elsif nCS = '0' and nWR = '0' then
-				case A is
-					when "00" =>		data_buffer0 <= D;
-					when "01" =>		data_buffer1 <= D;
-					when "10" =>		data_buffer2 <= D;
-					when "11" =>		data_buffer3 <= D;
-					when others =>		OE <= '0';
-				end case;
+			if nCS = '0' and nRD = '0' and nWR = '1' then
+				if A = "00" then
+					D <= (others => '1');
+				elsif A = "01" then
+					D <= (others => '0');
+				elsif A = "01" then
+					D <= (others => '0');
+				else
+					D <= (others => '0');
+				end if;
 			else
-				OE <= '0';
+				D <= (others => 'Z');
 			end if;
+			-- nRD_previous <= nRD; -- wird erst im nï¿½chsten Takt sichtbar
+			-- if nCS = '0' and nRD = '0' and nRD_previous = '1' then
+			-- 	OE <= '1';
+			-- 	case A is
+			-- 		when "00" =>		D_buffer <= data_buffer0;
+			-- 		when "01" =>		D_buffer <= data_buffer1;
+			-- 		when "10" =>		D_buffer <= data_buffer2;
+			-- 		when "11" => 		D_buffer <= data_buffer3;
+			-- 		when others =>		OE <= '0';
+			-- 	end case;
+			-- elsif nCS = '0' and nWR = '0' then
+			-- 	case A is
+			-- 		when "00" =>		data_buffer0 <= D;
+			-- 		when "01" =>		data_buffer1 <= D;
+			-- 		when "10" =>		data_buffer2 <= D;
+			-- 		when "11" =>		data_buffer3 <= D;
+			-- 		when others =>		OE <= '0';
+			-- 	end case;
+			-- else
+			-- 	OE <= '0';
+			-- end if;
 		end if;
 	end process;
 	
-	D <= D_buffer when OE = '1' else (others => 'Z');
+	-- D <= D_buffer when OE = '1' else (others => 'Z');
 	
 end Behavioral;

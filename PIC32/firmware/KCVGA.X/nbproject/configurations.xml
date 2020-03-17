@@ -146,9 +146,6 @@
             <logicalFolder name="f2" displayName="gpio" projectFiles="true">
               <itemPath>../src/config/default/peripheral/gpio/plib_gpio.h</itemPath>
             </logicalFolder>
-            <logicalFolder name="f5" displayName="pmp" projectFiles="true">
-              <itemPath>../src/config/default/peripheral/pmp/plib_pmp.h</itemPath>
-            </logicalFolder>
             <logicalFolder name="f4" displayName="spi" projectFiles="true">
               <itemPath>../src/config/default/peripheral/spi/plib_spi_common.h</itemPath>
               <itemPath>../src/config/default/peripheral/spi/plib_spi1.h</itemPath>
@@ -231,6 +228,7 @@
       <itemPath>../src/fpga_bitstream.h</itemPath>
       <itemPath>../src/app.h</itemPath>
       <itemPath>../src/fpga.h</itemPath>
+      <itemPath>../src/cdc.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -260,9 +258,6 @@
             </logicalFolder>
             <logicalFolder name="f2" displayName="gpio" projectFiles="true">
               <itemPath>../src/config/default/peripheral/gpio/plib_gpio.c</itemPath>
-            </logicalFolder>
-            <logicalFolder name="f5" displayName="pmp" projectFiles="true">
-              <itemPath>../src/config/default/peripheral/pmp/plib_pmp.c</itemPath>
             </logicalFolder>
             <logicalFolder name="f4" displayName="spi" projectFiles="true">
               <itemPath>../src/config/default/peripheral/spi/plib_spi1.c</itemPath>
@@ -321,6 +316,7 @@
       <itemPath>../src/main.c</itemPath>
       <itemPath>../src/app.c</itemPath>
       <itemPath>../src/fpga.c</itemPath>
+      <itemPath>../src/cdc.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -330,6 +326,7 @@
   </logicalFolder>
   <sourceRootList>
     <Elem>../src</Elem>
+    <Elem>../../../FPGA</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -342,7 +339,7 @@
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
         <languageToolchainVersion>2.40</languageToolchainVersion>
-        <platform>3</platform>
+        <platform>4</platform>
       </toolsSet>
       <packs>
         <pack name="PIC32MX_DFP" vendor="Microchip" version="1.2.228"/>

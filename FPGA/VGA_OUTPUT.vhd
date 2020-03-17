@@ -34,7 +34,7 @@ entity VGA_OUTPUT is
 		   FRAMESYNC     : out STD_LOGIC;
 		   FIFO_RD       : out STD_LOGIC;
 		   VGA_ADDR_WR   : out STD_LOGIC;
-		   VGA_ADDR      : out STD_LOGIC_VECTOR(15 downto 0);
+		   VGA_ADDR      : out STD_LOGIC_VECTOR(16 downto 0);
 		   VGA_DATA      : in  STD_LOGIC_VECTOR(14 downto 0));
 end VGA_OUTPUT;
 
@@ -68,8 +68,34 @@ signal VPOS               : integer range 0 to V_TOTAL-1 := 0;
 signal SUBPIXEL_COUNTER   : STD_LOGIC_VECTOR(1 downto 0) := (others => '0');
 signal NIBBLE_COUNTER     : STD_LOGIC_VECTOR(1 downto 0) := (others => '0');
 signal LINE_MULTIPLICATOR : STD_LOGIC_VECTOR(1 downto 0) := (others => '0');
-signal ADDR               : STD_LOGIC_VECTOR(15 downto 0); -- current VRAM address
+signal ADDR               : STD_LOGIC_VECTOR(16 downto 0); -- current VRAM address
 signal DATA               : STD_LOGIC_VECTOR(14 downto 0); -- latest pixel data from VRAM
+
+	----------------------------------------------------------------------------
+	-- GET_TEST_COLOR
+	----------------------------------------------------------------------------
+	function GET_TEST_COLOR(x: integer) return STD_LOGIC_VECTOR is
+		variable ret : STD_LOGIC_VECTOR(3 downto 0);
+	begin
+		if    x<80   then ret := "0000";
+		elsif x<160  then ret := "0001";
+		elsif x<240  then ret := "0010";
+		elsif x<320  then ret := "0011";
+		elsif x<400  then ret := "0100";
+		elsif x<480  then ret := "0101";
+		elsif x<560  then ret := "0110";
+		elsif x<640  then ret := "0111";
+		elsif x<720  then ret := "1000";
+		elsif x<800  then ret := "1001";
+		elsif x<880  then ret := "1010";
+		elsif x<960  then ret := "1011";
+		elsif x<1040 then ret := "1100";
+		elsif x<1120 then ret := "1101";
+		elsif x<1200 then ret := "1110";
+		else              ret := "1111";
+		end if;
+		return ret;
+	end function;
 
 	----------------------------------------------------------------------------
 	-- REDUCE_BRIGHTNESS
@@ -134,13 +160,13 @@ begin
 
 			----------------------------------------------------------------------
 			-- HSYNC TIMING
-			--                             ¦<- HPOS = 0      
-			-- HSYNC ···¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯\____________/¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯···
-			--                 ¦<- FRONT ->¦<- HSYNC  ->¦<- BACK  ->¦
-			--                 ¦   PORCH   ¦   LENGTH   ¦   PORCH   ¦
-			-- Video ···_/¯\_/¯\____________________________________/¯\_/¯\_···
-			--                 ¦                                    ¦
-			--                 ¦<- BLANKING during FP, HSYNC, BP  ->¦
+			--                             ï¿½<- HPOS = 0      
+			-- HSYNC ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\____________/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			--                 ï¿½<- FRONT ->ï¿½<- HSYNC  ->ï¿½<- BACK  ->ï¿½
+			--                 ï¿½   PORCH   ï¿½   LENGTH   ï¿½   PORCH   ï¿½
+			-- Video ï¿½ï¿½ï¿½_/ï¿½\_/ï¿½\____________________________________/ï¿½\_/ï¿½\_ï¿½ï¿½ï¿½
+			--                 ï¿½                                    ï¿½
+			--                 ï¿½<- BLANKING during FP, HSYNC, BP  ->ï¿½
 			----------------------------------------------------------------------
 
 			-- load start address at beginning of each line
@@ -187,9 +213,9 @@ begin
 
 			-- FIFO READ TIMING
 			--
-			--     CLK ____/¯¯1¯¯\_____/¯¯2¯¯\_____/¯¯3¯¯\_____/¯¯4¯¯\___
+			--     CLK ____/ï¿½ï¿½1ï¿½ï¿½\_____/ï¿½ï¿½2ï¿½ï¿½\_____/ï¿½ï¿½3ï¿½ï¿½\_____/ï¿½ï¿½4ï¿½ï¿½\___
 			--
-			-- FIFO_RD _____________/¯¯¯¯¯¯¯¯¯¯¯\________________________
+			-- FIFO_RD _____________/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\________________________
 			--                                 __________________________
 			--    DATA _______________________/DATA VALID
 
@@ -221,23 +247,23 @@ begin
 			and VPOS >= V_ACTIVE_BEGIN and VPOS < V_ACTIVE_END then
 
 			
---				if HPOS = H_ACTIVE_BEGIN + 640 or VPOS = V_ACTIVE_BEGIN + 512
---				or (HPOS-H_ACTIVE_BEGIN=0          and VPOS-V_ACTIVE_BEGIN>= 0          and VPOS-V_ACTIVE_BEGIN< 10)
---				or (HPOS-H_ACTIVE_BEGIN=0          and VPOS-V_ACTIVE_BEGIN>=V_PIXELS-10 and VPOS-V_ACTIVE_BEGIN<V_PIXELS)
---				or (HPOS-H_ACTIVE_BEGIN=H_PIXELS-1 and VPOS-V_ACTIVE_BEGIN>=0           and VPOS-V_ACTIVE_BEGIN< 10)
---				or (HPOS-H_ACTIVE_BEGIN=H_PIXELS-1 and VPOS-V_ACTIVE_BEGIN>=V_PIXELS-10 and VPOS-V_ACTIVE_BEGIN<V_PIXELS)
---				or (VPOS-V_ACTIVE_BEGIN=0          and HPOS-H_ACTIVE_BEGIN>=0           and HPOS-H_ACTIVE_BEGIN< 10)
---				or (VPOS-V_ACTIVE_BEGIN=0          and HPOS-H_ACTIVE_BEGIN>=H_PIXELS-10 and HPOS-H_ACTIVE_BEGIN<H_PIXELS)
---				or (VPOS-V_ACTIVE_BEGIN=V_PIXELS-1 and HPOS-H_ACTIVE_BEGIN>=0           and HPOS-H_ACTIVE_BEGIN< 10)
---				or (VPOS-V_ACTIVE_BEGIN=V_PIXELS-1 and HPOS-H_ACTIVE_BEGIN>=H_PIXELS-10 and HPOS-H_ACTIVE_BEGIN<H_PIXELS) then
---					R <= (others => '0'); -- debug: green pixel if corner or center line
---					G <= (others => '1');
---					B <= (others => '0');
---				elsif FIFO_FULL = '1' then
---					R <= (others => '1'); -- debug: yellow pixel if FIFO is full
---					G <= (others => '1');
---					B <= (others => '0');
---				else
+-- 				if HPOS = H_ACTIVE_BEGIN + 640 or VPOS = V_ACTIVE_BEGIN + 512
+-- 				or (HPOS-H_ACTIVE_BEGIN=0          and VPOS-V_ACTIVE_BEGIN>= 0          and VPOS-V_ACTIVE_BEGIN< 10)
+-- 				or (HPOS-H_ACTIVE_BEGIN=0          and VPOS-V_ACTIVE_BEGIN>=V_PIXELS-10 and VPOS-V_ACTIVE_BEGIN<V_PIXELS)
+-- 				or (HPOS-H_ACTIVE_BEGIN=H_PIXELS-1 and VPOS-V_ACTIVE_BEGIN>=0           and VPOS-V_ACTIVE_BEGIN< 10)
+-- 				or (HPOS-H_ACTIVE_BEGIN=H_PIXELS-1 and VPOS-V_ACTIVE_BEGIN>=V_PIXELS-10 and VPOS-V_ACTIVE_BEGIN<V_PIXELS)
+-- 				or (VPOS-V_ACTIVE_BEGIN=0          and HPOS-H_ACTIVE_BEGIN>=0           and HPOS-H_ACTIVE_BEGIN< 10)
+-- 				or (VPOS-V_ACTIVE_BEGIN=0          and HPOS-H_ACTIVE_BEGIN>=H_PIXELS-10 and HPOS-H_ACTIVE_BEGIN<H_PIXELS)
+-- 				or (VPOS-V_ACTIVE_BEGIN=V_PIXELS-1 and HPOS-H_ACTIVE_BEGIN>=0           and HPOS-H_ACTIVE_BEGIN< 10)
+-- 				or (VPOS-V_ACTIVE_BEGIN=V_PIXELS-1 and HPOS-H_ACTIVE_BEGIN>=H_PIXELS-10 and HPOS-H_ACTIVE_BEGIN<H_PIXELS) then
+-- 					R <= (others => '0'); -- debug: green pixel if corner or center line
+-- 					G <= (others => '1');
+-- 					B <= (others => '0');
+-- --				elsif FIFO_FULL = '1' then
+-- --					R <= (others => '1'); -- debug: yellow pixel if FIFO is full
+-- --					G <= (others => '1');
+-- --					B <= (others => '0');
+				-- else
 
 					-- color encoding: map 1 bit R+G+B+EX+EZ to 4 bit RGB
 					-- input data is 5 bits:
@@ -251,34 +277,54 @@ begin
 						when "00001" =>  rr := "0000"; gg := "0000"; bb := "0111"; --  1 blau
 						when "00010" =>  rr := "0111"; gg := "0000"; bb := "0000"; --  2 rot
 						when "00011" =>  rr := "0111"; gg := "0000"; bb := "0111"; --  3 purpur
-						when "00100" =>  rr := "0000"; gg := "0111"; bb := "0000"; --  4 grün
-						when "00101" =>  rr := "0000"; gg := "0111"; bb := "0111"; --  5 türkis
+						when "00100" =>  rr := "0000"; gg := "0111"; bb := "0000"; --  4 grï¿½n
+						when "00101" =>  rr := "0000"; gg := "0111"; bb := "0111"; --  5 tï¿½rkis
 						when "00110" =>  rr := "0111"; gg := "0111"; bb := "0000"; --  6 gelb
-						when "00111" =>  rr := "0111"; gg := "0111"; bb := "0111"; --  7 weiß
+						when "00111" =>  rr := "0111"; gg := "0111"; bb := "0111"; --  7 weiï¿½
 						--   "11xxx" => foreground, no highlight
 						when "11000" =>  rr := "0000"; gg := "0000"; bb := "0000"; --  0 schwarz
 						when "11001" =>  rr := "0000"; gg := "0000"; bb := "1111"; --  1 blau
 						when "11010" =>  rr := "1111"; gg := "0000"; bb := "0000"; --  2 rot
 						when "11011" =>  rr := "1111"; gg := "0000"; bb := "1111"; --  3 purpur
-						when "11100" =>  rr := "0000"; gg := "1111"; bb := "0000"; --  4 grün
-						when "11101" =>  rr := "0000"; gg := "1111"; bb := "1111"; --  5 türkis
+						when "11100" =>  rr := "0000"; gg := "1111"; bb := "0000"; --  4 grï¿½n
+						when "11101" =>  rr := "0000"; gg := "1111"; bb := "1111"; --  5 tï¿½rkis
 						when "11110" =>  rr := "1111"; gg := "1111"; bb := "0000"; --  6 gelb
-						when "11111" =>  rr := "1111"; gg := "1111"; bb := "1111"; --  7 weiß
+						when "11111" =>  rr := "1111"; gg := "1111"; bb := "1111"; --  7 weiï¿½
 						--   "10xxx" => foreground, highlight
 						when "10000" =>  rr := "0000"; gg := "0000"; bb := "0000"; --  8 schwarz   #000000
 						when "10001" =>  rr := "0110"; gg := "0000"; bb := "1111"; --  9 violett   #5901FF
 						when "10010" =>  rr := "1111"; gg := "0110"; bb := "0000"; --  A orange    #FF5901
 						when "10011" =>  rr := "1111"; gg := "0000"; bb := "1011"; --  B purpurrot #FF01B3
-						when "10100" =>  rr := "0000"; gg := "1111"; bb := "0110"; --  C grünblau  #01FF5A
-						when "10101" =>  rr := "0000"; gg := "1000"; bb := "1111"; --  D blaugrün  #0186FF
-						when "10110" =>  rr := "1000"; gg := "1111"; bb := "0000"; --  E gelbgrün  #86FF01
-						when "10111" =>  rr := "1111"; gg := "1111"; bb := "1111"; --  F weiß      #FFFFFF
+						when "10100" =>  rr := "0000"; gg := "1111"; bb := "0110"; --  C grï¿½nblau  #01FF5A
+						when "10101" =>  rr := "0000"; gg := "1000"; bb := "1111"; --  D blaugrï¿½n  #0186FF
+						when "10110" =>  rr := "1000"; gg := "1111"; bb := "0000"; --  E gelbgrï¿½n  #86FF01
+						when "10111" =>  rr := "1111"; gg := "1111"; bb := "1111"; --  F weiï¿½      #FFFFFF
 						--   "01xxx" => undefined
 						when others  =>  rr := "0000"; gg := "0000"; bb := "0000"; --  0 schwarz
 					end case;
 
+					-- if COLORTEST = '1' then
+					-- 	if VPOS > V_ACTIVE_BEGIN and VPOS < V_ACTIVE_BEGIN + 256 then
+					-- 		rr := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
+					-- 		gg := "0000";
+					-- 		bb := "0000";
+					-- 	elsif VPOS > V_ACTIVE_BEGIN + 256 and VPOS < V_ACTIVE_BEGIN + 512 then
+					-- 		rr := "0000";
+					-- 		gg := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
+					-- 		bb := "0000";
+					-- 	elsif VPOS > V_ACTIVE_BEGIN + 512 and VPOS < V_ACTIVE_BEGIN + 768 then
+					-- 		rr := "0000";
+					-- 		gg := "0000";
+					-- 		bb := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
+					-- 	else
+					-- 		rr := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
+					-- 		gg := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
+					-- 		bb := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
+					-- 	end if;
+					-- end if;
+
 					-- scan line effect: darken every 4th line to 3/4 brightness level
-					if SCANLINES = '1' and LINE_MULTIPLICATOR = 3 then
+					if SCANLINES = '0' and LINE_MULTIPLICATOR = 3 then
 						R <= REDUCE_BRIGHTNESS(rr, 3, 4); 
 						G <= REDUCE_BRIGHTNESS(gg, 3, 4); 
 						B <= REDUCE_BRIGHTNESS(bb, 3, 4); 
@@ -287,7 +333,7 @@ begin
 						G <= gg;
 						B <= bb;
 					end if;
---				end if;
+				-- end if;
 				
 				-- do sub pixel counting:
 				--   divide pixel clock by 4 (change pixel only every 4 clock cycles)

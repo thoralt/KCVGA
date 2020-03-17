@@ -183,6 +183,10 @@ void FPGA_Initialize ( void );
 void FPGA_Tasks( void );
 
 
+void FPGA_ConfigureWriteBuffer(void *buffer, size_t length);
+bool FPGA_ConfigureIsBusy();
+FPGA_ERROR FPGA_ConfigureBegin();
+void FPGA_ConfigureEnd();
 
 #endif /* _FPGA_H */
 

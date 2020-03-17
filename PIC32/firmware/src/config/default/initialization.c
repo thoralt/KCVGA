@@ -196,8 +196,6 @@ void SYS_Initialize ( void* data )
 
 	SPI1_Initialize();
 
-    PMP_Initialize();
-
 
 
 
@@ -213,6 +211,7 @@ void SYS_Initialize ( void* data )
 
     APP_Initialize();
     FPGA_Initialize();
+    CDC_Initialize();
 
 
     EVIC_Initialize();

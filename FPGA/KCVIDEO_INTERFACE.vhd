@@ -39,12 +39,10 @@ entity KCVIDEO_INTERFACE is
            HSYNC             : in  STD_LOGIC; -- horizontal sync input
            VSYNC             : in  STD_LOGIC; -- vertical sync input
            nRESET            : in  STD_LOGIC; -- reset input
-           TEST1             : out STD_LOGIC;
-           TEST2             : out STD_LOGIC;
            FIFO_WR           : out STD_LOGIC; -- SRAM FIFO write output
            FIFO_FULL         : in  STD_LOGIC; -- SRAM FIFO full input
 		   FRAMESYNC         : in  STD_LOGIC; -- start of frame from VGA module for screensaver
-           KCVIDEO_DATA      : out STD_LOGIC_VECTOR (30 downto 0); -- SRAM address and data
+           KCVIDEO_DATA      : out STD_LOGIC_VECTOR (31 downto 0); -- SRAM address and data
 		   ROM_ADDR          : out STD_LOGIC_VECTOR (13 downto 0); -- screensaver ROM address
 		   ROM_DATA          : in  STD_LOGIC);                     -- screensaver data input
 end KCVIDEO_INTERFACE;
@@ -53,7 +51,7 @@ architecture Behavioral of KCVIDEO_INTERFACE is
 
 -- screensaver position after reset
 constant LOGO_X : integer := 29;
-constant LOGO_Y : integer := 59;
+constant LOGO_Y : integer := 39;
 
 -- screensaver dimensions
 constant LOGO_W : integer := 128;
@@ -68,7 +66,7 @@ signal X                    : STD_LOGIC_VECTOR(10 downto 0) := (others => '0');
 signal Y                    : STD_LOGIC_VECTOR(10 downto 0) := (others => '0');
 
 -- current SRAM address
-signal A                    : STD_LOGIC_VECTOR(15 downto 0);
+signal A                    : STD_LOGIC_VECTOR(16 downto 0);
 
 -- edge detectors and filters for clock, HSYNC, VSYNC
 signal KC_CLK_edge_detector : STD_LOGIC_VECTOR(2 downto 0);
@@ -116,8 +114,8 @@ begin
 		color(3) := not(EX); -- intensity
 		color(4) := EZ;      -- foreground/background
 
-		TEST1 <= KC_CLK_filtered; -- DEBUG
-		TEST2 <= HSYNC_filtered; -- DEBUG
+		-- TEST1 <= KC_CLK_filtered; -- DEBUG
+		-- TEST2 <= HSYNC_filtered; -- DEBUG
 --		TEST3 <= CK; -- DEBUG
 --		TEST4 <= EX; -- DEBUG
 		
@@ -136,15 +134,17 @@ begin
 		elsif rising_edge(CLK) then
 			FIFO_WR <= '0';
 
-			-------------------------------------------------------------------
-			-- screensaver
-			-------------------------------------------------------------------
+            -------------------------------------------------------------------
+            -- screensaver timeout and movement
+            -------------------------------------------------------------------
 			-- only execute screensaver if no input data was available for more
 			-- than 216 000 000 cycles (2 seconds)
 			if not(TIMEOUT = 216000000) then 
 				TIMEOUT <= TIMEOUT + 1;
 			else
-				-- move logo on every frame start
+				-- move logo on every VGA frame start
+				-- LOGO_POSITION_X <= STD_LOGIC_VECTOR(to_unsigned(0, 9));
+				-- LOGO_POSITION_Y <= STD_LOGIC_VECTOR(to_unsigned(39, 8));
 				if FRAMESYNC = '1' then
 					SCREENSAVER_DONE <= '0';
 					if LOGO_DIRECTION_X = '1' then
@@ -210,8 +210,35 @@ begin
 						
 					else
 --						color := LOGO_BG;
-						color := "00000";
+						if A < 1*2048 then
+							color := "00001";
+						elsif A < 3*2048 then
+							color := "00010";
+						elsif A < 5*2048 then
+							color := "00011";
+						elsif A < 7*2048 then
+							color := "00100";
+						elsif A < 11*2048 then
+							color := "00101";
+						elsif A < 13*2048 then
+							color := "00101";
+						else
+							color := "00110";
+						end if;
+--						color := "00000";
 					end if;
+
+					-- if Y = 0 then
+					-- 	color := "00011";
+					-- elsif Y = 40 then
+					-- 	color := "00010";
+					-- elsif Y = 50 then
+					-- 	color := "00100";
+					-- elsif Y = 60 then
+					-- 	color := "10010";
+					-- else
+					-- 	color := "00001";
+					-- end if;
 
 					-- stuff current pixel into dataword
 					if pixel = pixel1 then
@@ -224,7 +251,7 @@ begin
 						KCVIDEO_DATA(14 downto 10) <= color;
 						-- current dataword is now complete
 						-- -> set address bits in upper 16 bits
-						KCVIDEO_DATA(30 downto 15) <= A;
+						KCVIDEO_DATA(31 downto 15) <= A;
 						-- write to FIFO
 						FIFO_WR <= '1';
 						A <= A + 1;
@@ -257,8 +284,8 @@ begin
 			-- external video sampling
 			-------------------------------------------------------------------
 			-- check for falling edge on KC_CLK
-			-- Normally, the clock in the target device is valid on
-			-- the _rising_ edge. But since we have inserted a small 
+			-- Normally, the data in the target device is valid on
+			-- the _rising_ clock edge. Since we have inserted a small 
 			-- shift register for synchronization and edge detection,
 			-- data is now valid on the first _falling_ edge after
 			-- falling HSYNC.
@@ -280,7 +307,7 @@ begin
 						KCVIDEO_DATA(14 downto 10) <= color;
 						-- current dataword is now complete
 						-- -> set address bits in upper 16 bits
-						KCVIDEO_DATA(30 downto 15) <= A;
+						KCVIDEO_DATA(31 downto 15) <= A;
 
 						-- write to FIFO
 						-- skip dataword if FIFO is full (can't happen if 
