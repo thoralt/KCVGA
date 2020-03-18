@@ -7,7 +7,6 @@ This project aims to convert the video output of old KC85/4 computer systems int
 ## Second Prototype
 <img src="https://github.com/thoralt/KCVGA/raw/master/doc/IMG_6773.jpg" height=250> <img src="https://github.com/thoralt/KCVGA/raw/master/doc/IMG_6774.jpg" height=250>
 
-
 # Schematic
 
 ![FPGA top level](/doc/KCVGA_schematic.png)
