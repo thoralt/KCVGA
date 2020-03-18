@@ -76,8 +76,8 @@ def configureFPGA(filename, port):
     print(ser.readline())
     ser.close()
 
-port = '/dev/cu.usbmodem145301'
-filename = '/Users/thoralt/Library/Mobile Documents/com~apple~CloudDocs/Documents/source/KCVGA/FPGA/TOP_LEVEL.bit'
+port = '/dev/cu.usbmodem145201'
+filename = 'TOP_LEVEL.bit'
 changedate = os.path.getmtime(filename)
 configureFPGA(filename, port)
 
