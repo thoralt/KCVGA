@@ -15,7 +15,16 @@ APP_DATA appData;
  */
 void APP_Infotext()
 {
+    char buf[256];
+    
     printf("\nKCVGA 0.1 ready\n");
+
+//    uint32_t count = uxTaskGetNumberOfTasks();
+    vTaskList(buf);
+    printf(buf);
+    vTaskGetRunTimeStats(buf);
+    printf(buf);
+    
 }
 
 /******************************************************************************

@@ -1,5 +1,4 @@
 #include "cdc.h"
-#include "ringbuffer.h"
 
 //=============================================================================
 // Global variables
@@ -204,8 +203,8 @@ static void USB_TX_Task(void)
     if(m_TXHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID &&
        uxQueueMessagesWaiting(CDC_TX_Queue) > 0)
     {
-        // transfer bytes from ring buffer to transmit buffer until ring
-        // buffer is empty or transmit buffer is full
+        // transfer bytes from queuer to TX buffer until either queue
+        // is empty or TX buffer is full
         size_t size = 0;
         while(uxQueueMessagesWaiting(CDC_TX_Queue)>0 && size<sizeof(m_TXBytes))
         {
@@ -263,8 +262,8 @@ void CDC_Initialize(void)
 
     m_RXHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
     m_TXHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
-    CDC_RX_Queue = xQueueCreate(BUFFER_SIZE, sizeof(unsigned char));
-    CDC_TX_Queue = xQueueCreate(BUFFER_SIZE, sizeof(unsigned char));
+    CDC_RX_Queue = xQueueCreate(CDC_BUF_SIZE, sizeof(unsigned char));
+    CDC_TX_Queue = xQueueCreate(CDC_BUF_SIZE, sizeof(unsigned char));
 }
 
 //-----------------------------------------------------------------------------
