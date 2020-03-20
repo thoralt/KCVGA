@@ -61,14 +61,6 @@
 // *****************************************************************************
 // *****************************************************************************
 
-/*** Macros for FPGA_RESET pin ***/
-#define FPGA_RESET_Set()               (LATASET = (1<<3))
-#define FPGA_RESET_Clear()             (LATACLR = (1<<3))
-#define FPGA_RESET_Toggle()            (LATAINV= (1<<3))
-#define FPGA_RESET_Get()               ((PORTA >> 3) & 0x1)
-#define FPGA_RESET_OutputEnable()      (TRISACLR = (1<<3))
-#define FPGA_RESET_InputEnable()       (TRISASET = (1<<3))
-#define FPGA_RESET_PIN                  GPIO_PIN_RA3
 /*** Macros for FPGA_PROG_B pin ***/
 #define FPGA_PROG_B_Set()               (LATBSET = (1<<4))
 #define FPGA_PROG_B_Clear()             (LATBCLR = (1<<4))

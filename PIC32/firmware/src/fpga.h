@@ -116,77 +116,15 @@ typedef struct
 // *****************************************************************************
 // *****************************************************************************
 
-/*******************************************************************************
-  Function:
-    void FPGA_Initialize ( void )
-
-  Summary:
-     MPLAB Harmony application initialization routine.
-
-  Description:
-    This function initializes the Harmony application.  It places the
-    application in its initial state and prepares it to run so that its
-    FPGA_Tasks function can be called.
-
-  Precondition:
-    All other system initialization routines should be called before calling
-    this routine (in "SYS_Initialize").
-
-  Parameters:
-    None.
-
-  Returns:
-    None.
-
-  Example:
-    <code>
-    FPGA_Initialize();
-    </code>
-
-  Remarks:
-    This routine must be called from the SYS_Initialize function.
-*/
-
 void FPGA_Initialize ( void );
-
-
-/*******************************************************************************
-  Function:
-    void FPGA_Tasks ( void )
-
-  Summary:
-    MPLAB Harmony Demo application tasks function
-
-  Description:
-    This routine is the Harmony Demo application's tasks function.  It
-    defines the application's state machine and core logic.
-
-  Precondition:
-    The system and application initialization ("SYS_Initialize") should be
-    called before calling this.
-
-  Parameters:
-    None.
-
-  Returns:
-    None.
-
-  Example:
-    <code>
-    FPGA_Tasks();
-    </code>
-
-  Remarks:
-    This routine must be called from SYS_Tasks() routine.
- */
-
 void FPGA_Tasks( void );
 
 
-void FPGA_ConfigureWriteBuffer(void *buffer, size_t length);
-bool FPGA_ConfigureIsBusy();
-FPGA_ERROR FPGA_ConfigureBegin();
-void FPGA_ConfigureEnd();
+void FPGA_ConfigurationWriteBuffer(void *buffer, size_t length);
+bool FPGA_ConfigurationIsBusy();
+FPGA_ERROR FPGA_ConfigurationBegin();
+void FPGA_ConfigurationEnd();
+void FPGA_Reset();
 
 #endif /* _FPGA_H */
 

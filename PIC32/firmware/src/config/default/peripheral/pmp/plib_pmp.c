@@ -84,7 +84,7 @@ void PMP_Initialize( void )
     PMMODEbits.WAITE = 0x0;
 
     /* Configure chip select function */
-    PMCONbits.CSF = 0x0;
+    PMCONbits.CSF = 0x2;
 
     PMCONbits.CS1P = 0x0;
 

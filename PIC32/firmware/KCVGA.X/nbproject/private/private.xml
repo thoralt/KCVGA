@@ -8,12 +8,10 @@
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/fpga.h</file>
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/main.c</file>
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/app.c</file>
-            <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/app.h</file>
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/config/default/peripheral/gpio/plib_gpio.h</file>
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/fpga.c</file>
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/cdc.c</file>
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/config/default/peripheral/gpio/plib_gpio.c</file>
-            <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/config/default/peripheral/clk/plib_clk.c</file>
         </group>
     </open-files>
 </project-private>

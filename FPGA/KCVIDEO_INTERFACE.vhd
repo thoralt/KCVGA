@@ -51,7 +51,7 @@ architecture Behavioral of KCVIDEO_INTERFACE is
 
 -- screensaver position after reset
 constant LOGO_X : integer := 29;
-constant LOGO_Y : integer := 39;
+constant LOGO_Y : integer := 49;
 
 -- screensaver dimensions
 constant LOGO_W : integer := 128;
@@ -114,11 +114,6 @@ begin
 		color(3) := not(EX); -- intensity
 		color(4) := EZ;      -- foreground/background
 
-		-- TEST1 <= KC_CLK_filtered; -- DEBUG
-		-- TEST2 <= HSYNC_filtered; -- DEBUG
---		TEST3 <= CK; -- DEBUG
---		TEST4 <= EX; -- DEBUG
-		
 		if nRESET = '0' then
 			LOGO_POSITION_X <= STD_LOGIC_VECTOR(to_unsigned(LOGO_X, 9));
 			LOGO_POSITION_Y <= STD_LOGIC_VECTOR(to_unsigned(LOGO_Y, 8));
@@ -143,8 +138,6 @@ begin
 				TIMEOUT <= TIMEOUT + 1;
 			else
 				-- move logo on every VGA frame start
-				-- LOGO_POSITION_X <= STD_LOGIC_VECTOR(to_unsigned(0, 9));
-				-- LOGO_POSITION_Y <= STD_LOGIC_VECTOR(to_unsigned(39, 8));
 				if FRAMESYNC = '1' then
 					SCREENSAVER_DONE <= '0';
 					if LOGO_DIRECTION_X = '1' then
@@ -210,35 +203,8 @@ begin
 						
 					else
 --						color := LOGO_BG;
-						if A < 1*2048 then
-							color := "00001";
-						elsif A < 3*2048 then
-							color := "00010";
-						elsif A < 5*2048 then
-							color := "00011";
-						elsif A < 7*2048 then
-							color := "00100";
-						elsif A < 11*2048 then
-							color := "00101";
-						elsif A < 13*2048 then
-							color := "00101";
-						else
-							color := "00110";
-						end if;
---						color := "00000";
+						color := "00000";
 					end if;
-
-					-- if Y = 0 then
-					-- 	color := "00011";
-					-- elsif Y = 40 then
-					-- 	color := "00010";
-					-- elsif Y = 50 then
-					-- 	color := "00100";
-					-- elsif Y = 60 then
-					-- 	color := "10010";
-					-- else
-					-- 	color := "00001";
-					-- end if;
 
 					-- stuff current pixel into dataword
 					if pixel = pixel1 then
@@ -290,7 +256,6 @@ begin
 			-- data is now valid on the first _falling_ edge after
 			-- falling HSYNC.
 			if KC_CLK_edge_detector(2 downto 1) = "10" then
---				CK <= '0'; -- DEBUG
 				-- write 321 pixels per line because 321 is divisible by 3 and 
 				-- we need to fill the last dataword completely 
 				-- -> use one dummy pixel

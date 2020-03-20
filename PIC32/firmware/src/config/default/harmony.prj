@@ -499,8 +499,8 @@
           <Name dnOrder="1">plib_gpio.h</Name>
           <LogicalPath dnOrder="2">config/default/peripheral/gpio/</LogicalPath>
           <PhysicalPath dnOrder="3">/peripheral/gpio/</PhysicalPath>
-          <GeneratedChecksum dnOrder="4">C4479B5AAA58301866411960433302A7</GeneratedChecksum>
-          <UserChecksum dnOrder="5">C4479B5AAA58301866411960433302A7</UserChecksum>
+          <GeneratedChecksum dnOrder="4">C65E6261E27F4AB483BB9706382D958F</GeneratedChecksum>
+          <UserChecksum dnOrder="5">C65E6261E27F4AB483BB9706382D958F</UserChecksum>
         </File>
         <File dnOrder="62">
           <Type dnOrder="0">HEADER</Type>

@@ -1,21 +1,9 @@
 ----------------------------------------------------------------------------------
--- Company: 
 -- Engineer:       Thoralt Franz
 -- 
 -- Create Date:    17:41:21 03/02/2015 
 -- Design Name: 
 -- Module Name:    SRAM_INTERFACE - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -32,8 +20,11 @@ entity SRAM_INTERFACE is
            VGA_FIFO_FULL      : in    STD_LOGIC;                      -- VGA FIFO full input
            VGA_FIFO_RST       : out   STD_LOGIC;                      -- VGA FIFO reset output
            KCVIDEO_DATA       : in    STD_LOGIC_VECTOR (31 downto 0); -- KCVIDEO address and data input
-		   KCVIDEO_FIFO_RD    : out   STD_LOGIC;                      -- KCVIDEO FIFO read input
+		   KCVIDEO_FIFO_RD    : out   STD_LOGIC;                      -- KCVIDEO FIFO read output
 		   KCVIDEO_FIFO_EMPTY : in    STD_LOGIC;                      -- KCVIDEO FIFO empty input
+           PIC32_DATA         : in    STD_LOGIC_VECTOR (31 downto 0); -- PIC32 address and data input
+		   PIC32_FIFO_RD      : out   STD_LOGIC;                      -- PIC32 FIFO read output
+		   PIC32_FIFO_EMPTY   : in    STD_LOGIC;                      -- PIC32 FIFO empty input
            A                  : out   STD_LOGIC_VECTOR (16 downto 0); -- SRAM address output
            D                  : inout STD_LOGIC_VECTOR (15 downto 0); -- SRAM data output
            nCE                : out   STD_LOGIC;                      -- SRAM chip enable
@@ -58,7 +49,10 @@ type SRAM_INTERFACE_STATE is (
 	                -- increment address, start next read cycle
 	KCVIDEO_WRITE1, -- request next data word from KCVIDEO FIFO
 	KCVIDEO_WRITE2, -- set up data and address for SRAM write
-	KCVIDEO_WRITE3  -- write to SRAM
+	KCVIDEO_WRITE3, -- write to SRAM
+	PIC32_WRITE1,   -- request next data word from PIC32 FIFO
+	PIC32_WRITE2,   -- set up data and address for SRAM write
+	PIC32_WRITE3    -- write to SRAM
 );
 
 -- current state of the SRAM state machine
@@ -75,6 +69,12 @@ signal VGA_DATA_COUNTER     : STD_LOGIC_VECTOR(6 downto 0);
 
 begin
 
+	-- always drive chip enable, high byte enable and low byte enable with
+	-- active signals
+	nCE <= '0';
+	nBHE <= '0';
+	nBLE <= '0';
+
 	-- clock = 108 MHz, 9.26 ns
 	process (nRESET, CLK)
 	begin
@@ -82,36 +82,32 @@ begin
 		-- RESET
 	    --========================================================================
 		if nRESET = '0' then
-		    -- SRAM CE/OE/WE/BHE/BLE/address/data inactive
-			nCE <= '1';
+			current_state <= idle;
+
+			-- SRAM OE/WE/address/data inactive
 			nOE <= '1';
 			nWE <= '1';
-			nBHE <= '1';
-			nBLE <= '1';
 			D <= (others => 'Z');
 			A <= (others => 'Z');
-			-- address/counter = 0, state = idle, reset VGA FIFO
-			VGA_ADDR_WR_previous <= '0';
-			current_state <= idle;
-			VGA_FIFO_RST <= '1';
-			VGA_FIFO_WR <= '0';
+
 			CURRENT_VGA_ADDR <= (others => '0');
 			VGA_DATA_COUNTER <= (others => '0');
+			VGA_ADDR_WR_previous <= '0';
+			VGA_FIFO_RST <= '1';
+			VGA_FIFO_WR <= '0';
 			KCVIDEO_FIFO_RD <= '0';
+			PIC32_FIFO_RD <= '0';
 			
 	    --========================================================================
 		-- Master clock 108 MHz rising edge
 	    --========================================================================
 		elsif rising_edge(CLK) then
-			-- always deassert FIFO reset pin
+
+			-- reset FIFO flags every cycle
 			VGA_FIFO_RST <= '0';
-		
-			-- reset FIFO write flag every cycle
 			VGA_FIFO_WR <= '0';
-			
-			-- reset FIFO read flag every cycle
 			KCVIDEO_FIFO_RD <= '0';
-			
+			PIC32_FIFO_RD <= '0';
 
 			----------------------------------------------------------------------
 			-- central state machine begin
@@ -127,11 +123,8 @@ begin
 					-- start SRAM read cycle
 					A <= CURRENT_VGA_ADDR;
 					D <= (others => 'Z');
-					nCE <= '0';
 					nOE <= '0';
 					nWE <= '1';
-					nBHE <= '0';
-					nBLE <= '0';
 					current_state <= VGA_READ1;
 
 				-- new video input data available?
@@ -141,12 +134,18 @@ begin
 					
 					-- prepare SRAM write
 					nWE <= '1';
-					nCE <= '0';
 					nOE <= '1';
-					nBHE <= '0';
-					nBLE <= '0';
-					
 					current_state <= KCVIDEO_WRITE1;
+
+				-- new PIC32 input data available?
+				elsif PIC32_FIFO_EMPTY = '0' then
+					-- request next data word from FIFO
+					PIC32_FIFO_RD <= '1';
+					
+					-- prepare SRAM write
+					nWE <= '1';
+					nOE <= '1';
+					current_state <= PIC32_WRITE1;
 				end if;
 			
 			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -162,10 +161,7 @@ begin
 			elsif current_state = KCVIDEO_WRITE2 then
 				-- fetch address and data from FIFO
 				A <= KCVIDEO_DATA(31 downto 15);
-				D <= '0' & KCVIDEO_DATA(14 downto 0); -- highest bit always 0 (unused)
-				
-				-- A <= "0000000000000000";
-				-- D <= "0100010000010001";
+				D(14 downto 0) <= KCVIDEO_DATA(14 downto 0); -- highest bit unused
 
 				-- data layout in FIFO:
 				--
@@ -200,6 +196,32 @@ begin
 				current_state <= idle;
 
 			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			-- PIC32_WRITE1
+			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			elsif current_state = PIC32_WRITE1 then
+				-- one wait state to wait for FIFO to deliver next data word
+				current_state <= PIC32_WRITE2;
+
+			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			-- PIC32_WRITE2
+			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			elsif current_state = PIC32_WRITE2 then
+				-- fetch address and data from FIFO
+				A(15 downto 0) <= PIC32_DATA(31 downto 16);
+				D <= PIC32_DATA(15 downto 0);
+				current_state <= PIC32_WRITE3;
+
+			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			-- PIC32_WRITE3
+			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			elsif current_state = PIC32_WRITE3 then
+				nWE <= '0';
+				
+				-- always exit to state "idle" to allow VGA output to fetch data
+				-- -> no back-to-back write since this could potentially block VGA
+				current_state <= idle;
+
+			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			-- VGA_READ1
 			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			elsif current_state = VGA_READ1 then
@@ -213,19 +235,7 @@ begin
 			-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			elsif current_state = VGA_READ2 then
 
-				-- DEBUG
-				-- if CURRENT_VGA_ADDR = 1 then -- DEBUG
-				-- 	VGA_DATA <= "000000000011111"; -- DEBUG
-				-- elsif CURRENT_VGA_ADDR = 107 then -- DEBUG
-				-- 	VGA_DATA <= "000001111100000"; -- DEBUG
-				-- elsif CURRENT_VGA_ADDR = 27286 then -- DEBUG
-				-- 	VGA_DATA <= "000000000011111"; -- DEBUG
-				-- elsif CURRENT_VGA_ADDR = 27392 then -- DEBUG
-				-- 	VGA_DATA <= "000001111100000"; -- DEBUG
-				-- else -- DEBUG
-					VGA_DATA <= D(14 downto 0);
-				-- end if; -- DEBUG
-
+				VGA_DATA <= D(14 downto 0);
 				VGA_FIFO_WR <= '1'; -- write to FIFO
 
 				-- data transfer complete?
@@ -235,11 +245,8 @@ begin
 					-- more data can be read back-to-back, so start next VGA RAM read cycle
 					A <= CURRENT_VGA_ADDR;
 					D <= (others => 'Z');
-					nCE <= '0';
 					nOE <= '0';
 					nWE <= '1';
-					nBHE <= '0';
-					nBLE <= '0';
 					current_state <= VGA_READ1;
 				end if;
 				

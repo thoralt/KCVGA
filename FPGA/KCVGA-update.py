@@ -5,7 +5,8 @@ import os
 import time
 
 # Print iterations progress
-def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, \
+        length = 100, fill = '█', printEnd = "\r"):
     """
     Call in a loop to create terminal progress bar
     @params:
@@ -26,43 +27,71 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total: 
         print()
 
-
 def configureFPGA(filename, port):
+    """
+    Sends a configuration bitstream to the FPGA using a (virtual) serial port
+    @params:
+        filename    - Required: input file name
+        port        - Required: com port device
+    @return: True if successful, False if error
+    """
+
+    if not os.path.exists(port):
+        print("Error: Could not find port '%s'." % port)
+        return False
+
+    if not os.path.exists(filename):
+        print("Error: Could not find file '%s'." % filename)
+        return False
+
+    # check the input file size
+    filesize = remainingSize = os.path.getsize(filename)
+    if filesize > 1024*1024:
+        print("Error: The input file is too large (file size up to 1 MB supported)")
+        return False
+
+    print('Input file size: %i bytes' % remainingSize)
+    offset = 0
+
+    # open and read the input file
     with open(filename, mode='rb') as file:
         data = bytes(file.read())
 
-    filesize = remainingSize = os.path.getsize(filename)
-    offset = 0
-
-    print('Input file size: %i bytes' % remainingSize)
-
+    # open serial port and start FPGA configuration by writing 'f'
     ser = serial.Serial(port)
     ser.write('f');
+
+    # write the number of bytes to expect as binary representation
     ser.write(struct.pack('<i', remainingSize))
 
+    # check if length was received correctly (reply has to start with 'OK')
     result = ser.readline()
     if not result.startswith('OK'):
         print(result)
-        sys.exit() 
+        return False
 
+    # check if FPGA correctly entered configuration mode
     result = ser.readline()
     if not result.startswith('OK'):
         print(result)
-        sys.exit()
+        return False
 
     printProgressBar(0, filesize, prefix='Progress:', suffix='Complete', length=50)
 
+    # loop until all bytes have been transferred
     while remainingSize > 0:
 
+        # check if this is the last block
         bytesToTransfer = 256
         if remainingSize < bytesToTransfer:
             bytesToTransfer = remainingSize
 
+        # send block to FPGA and wait for reply
         ser.write(data[offset:offset+bytesToTransfer])
         result = ser.readline()
         if not result.startswith('OK'):
             print(result),
-            sys.exit()
+            return False
 
         offset += 256
         if remainingSize > 256:
@@ -75,15 +104,20 @@ def configureFPGA(filename, port):
     print
     print(ser.readline())
     ser.close()
+    return True
 
 port = '/dev/cu.usbmodem145201'
 filename = 'TOP_LEVEL.bit'
 changedate = os.path.getmtime(filename)
-configureFPGA(filename, port)
 
+if not configureFPGA(filename, port):
+    sys.exit()
+
+# check file modification time in endless loop
 while True:
     if os.path.getmtime(filename) > changedate:
         changedate = os.path.getmtime(filename)
-        configureFPGA(filename, port)
+        if not configureFPGA(filename, port):
+            sys.exit()
 
     time.sleep(1)

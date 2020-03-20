@@ -9,7 +9,6 @@
         <signal name="CLK_IN" />
         <signal name="RESET" />
         <signal name="nRESET" />
-        <signal name="PM_nCS" />
         <signal name="PM_nWR" />
         <signal name="PM_nRD" />
         <signal name="PM_A(1:0)" />
@@ -52,19 +51,18 @@
         <signal name="KC_HSYNC" />
         <signal name="KC_EZ" />
         <signal name="SCANLINES" />
-        <signal name="XLXN_1151" />
-        <signal name="XLXN_1152" />
-        <signal name="XLXN_1154" />
-        <signal name="XLXN_1155" />
-        <signal name="XLXN_1156" />
-        <signal name="XLXN_1157" />
-        <signal name="XLXN_1158" />
         <signal name="XLXN_1161" />
-        <signal name="XLXN_1162" />
-        <signal name="XLXN_1163" />
+        <signal name="XLXN_1166(31:0)" />
+        <signal name="XLXN_1167" />
+        <signal name="XLXN_1168" />
+        <signal name="XLXN_1169" />
+        <signal name="XLXN_1170" />
+        <signal name="XLXN_1171" />
+        <signal name="XLXN_1172" />
+        <signal name="XLXN_1173(31:0)" />
+        <signal name="XLXN_1174" />
         <port polarity="Input" name="CLK_IN" />
         <port polarity="Input" name="nRESET" />
-        <port polarity="Input" name="PM_nCS" />
         <port polarity="Input" name="PM_nWR" />
         <port polarity="Input" name="PM_nRD" />
         <port polarity="Input" name="PM_A(1:0)" />
@@ -122,7 +120,7 @@
             <line x2="448" y1="32" y2="32" x1="384" />
         </blockdef>
         <blockdef name="SRAM_INTERFACE">
-            <timestamp>2020-3-16T21:54:47</timestamp>
+            <timestamp>2020-3-19T21:5:19</timestamp>
             <line x2="0" y1="-480" y2="-480" x1="64" />
             <rect width="64" x="0" y="-44" height="24" />
             <line x2="0" y1="-32" y2="-32" x1="64" />
@@ -153,27 +151,29 @@
             <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="552" cy="400" />
             <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="552" cy="464" />
             <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="552" cy="528" />
+            <line x2="0" y1="528" y2="528" x1="64" />
+            <line x2="0" y1="592" y2="592" x1="64" />
+            <line x2="0" y1="656" y2="656" x1="64" />
+            <rect width="64" x="0" y="644" height="24" />
         </blockdef>
         <blockdef name="PIC32_INTERFACE">
-            <timestamp>2020-3-15T17:34:31</timestamp>
+            <timestamp>2020-3-19T20:49:49</timestamp>
             <rect width="480" x="64" y="-384" height="448" />
             <line x2="0" y1="-352" y2="-352" x1="64" />
             <line x2="0" y1="-288" y2="-288" x1="64" />
-            <line x2="0" y1="-224" y2="-224" x1="64" />
             <line x2="0" y1="-160" y2="-160" x1="64" />
             <line x2="0" y1="-96" y2="-96" x1="64" />
+            <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="56" cy="-352" />
+            <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="56" cy="-160" />
+            <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="56" cy="-96" />
+            <line x2="608" y1="-32" y2="-32" x1="544" />
             <rect width="64" x="0" y="-44" height="24" />
             <line x2="0" y1="-32" y2="-32" x1="64" />
             <line x2="64" y1="32" y2="32" x1="0" />
             <rect width="64" x="0" y="20" height="24" />
-            <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="56" cy="-352" />
-            <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="56" cy="-224" />
-            <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="56" cy="-160" />
-            <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="56" cy="-96" />
-            <rect width="64" x="544" y="-44" height="24" />
-            <line x2="608" y1="-32" y2="-32" x1="544" />
+            <line x2="608" y1="-96" y2="-96" x1="544" />
             <rect width="64" x="544" y="20" height="24" />
-            <line x2="612" y1="32" y2="32" x1="544" />
+            <line x2="608" y1="32" y2="32" x1="544" />
         </blockdef>
         <blockdef name="KCVIDEO_INTERFACE">
             <timestamp>2020-3-16T21:50:41</timestamp>
@@ -233,18 +233,18 @@
             <line x2="416" y1="432" y2="432" x1="480" />
         </blockdef>
         <blockdef name="FIFO">
-            <timestamp>2020-3-16T22:25:8</timestamp>
+            <timestamp>2020-3-19T14:16:22</timestamp>
             <rect width="224" x="32" y="12" height="252" />
-            <line x2="32" y1="176" y2="176" x1="0" />
-            <line x2="256" y1="176" y2="176" x1="288" />
-            <line x2="32" y1="240" y2="240" x1="0" />
-            <line x2="256" y1="240" y2="240" x1="288" />
-            <rect width="32" x="0" y="232" height="16" />
-            <rect width="32" x="256" y="232" height="16" />
-            <line x2="256" y1="112" y2="112" x1="288" />
-            <line x2="32" y1="48" y2="48" x1="0" />
-            <line x2="32" y1="80" y2="80" x1="0" />
-            <line x2="32" y1="112" y2="112" x1="0" />
+            <line x2="-32" y1="176" y2="176" x1="32" />
+            <line x2="320" y1="176" y2="176" x1="256" />
+            <line x2="-32" y1="240" y2="240" x1="32" />
+            <line x2="320" y1="240" y2="240" x1="256" />
+            <rect width="64" x="-32" y="224" height="32" />
+            <rect width="64" x="256" y="224" height="32" />
+            <line x2="320" y1="112" y2="112" x1="256" />
+            <line x2="-32" y1="48" y2="48" x1="32" />
+            <line x2="-32" y1="80" y2="80" x1="32" />
+            <line x2="-32" y1="112" y2="112" x1="32" />
         </blockdef>
         <blockdef name="ROM">
             <timestamp>2015-3-15T21:57:28</timestamp>
@@ -253,6 +253,20 @@
             <line x2="32" y1="128" y2="128" x1="-32" />
             <rect width="64" x="-32" y="116" height="24" />
             <line x2="-32" y1="192" y2="192" x1="32" />
+        </blockdef>
+        <blockdef name="PIC32_TO_SRAM_FIFO">
+            <timestamp>2020-3-19T22:17:13</timestamp>
+            <rect width="224" x="32" y="32" height="256" />
+            <line x2="-32" y1="64" y2="64" x1="32" />
+            <line x2="-32" y1="96" y2="96" x1="32" />
+            <line x2="-32" y1="128" y2="128" x1="32" />
+            <line x2="320" y1="128" y2="128" x1="256" />
+            <line x2="-32" y1="256" y2="256" x1="32" />
+            <line x2="320" y1="256" y2="256" x1="256" />
+            <line x2="-32" y1="192" y2="192" x1="32" />
+            <line x2="320" y1="192" y2="192" x1="256" />
+            <rect width="64" x="-32" y="240" height="32" />
+            <rect width="64" x="256" y="240" height="32" />
         </blockdef>
         <block symbolname="inv" name="ResetInverter">
             <blockpin signalname="nRESET" name="I" />
@@ -277,7 +291,7 @@
             <blockpin signalname="VGA_G(3:0)" name="G(3:0)" />
             <blockpin signalname="VGA_B(3:0)" name="B(3:0)" />
             <blockpin signalname="SCANLINES" name="SCANLINES" />
-            <blockpin signalname="XLXN_1152" name="FRAMESYNC" />
+            <blockpin signalname="XLXN_1174" name="FRAMESYNC" />
         </block>
         <block symbolname="FIFO128" name="FIFO_VGA">
             <blockpin signalname="FIFO_VGA_RST" name="rst" />
@@ -313,6 +327,9 @@
             <blockpin signalname="SRAM_D(15:0)" name="D(15:0)" />
             <blockpin signalname="SRAM_nBLE" name="nBLE" />
             <blockpin signalname="SRAM_nBHE" name="nBHE" />
+            <blockpin signalname="XLXN_1173(31:0)" name="PIC32_DATA(31:0)" />
+            <blockpin signalname="XLXN_1172" name="PIC32_FIFO_RD" />
+            <blockpin signalname="XLXN_1171" name="PIC32_FIFO_EMPTY" />
         </block>
         <block symbolname="KCVIDEO_INTERFACE" name="iKCVIDEO_INTERFACE">
             <blockpin signalname="KCVIDEO_DATA(31:0)" name="KCVIDEO_DATA(31:0)" />
@@ -330,7 +347,7 @@
             <blockpin signalname="KC_HSYNC" name="HSYNC" />
             <blockpin signalname="KC_EZ" name="EZ" />
             <blockpin signalname="XLXN_1161" name="FIFO_FULL" />
-            <blockpin signalname="XLXN_1152" name="FRAMESYNC" />
+            <blockpin signalname="XLXN_1174" name="FRAMESYNC" />
         </block>
         <block symbolname="ROM" name="iROM">
             <blockpin signalname="CLK_108_MHz" name="clka" />
@@ -338,25 +355,35 @@
             <blockpin signalname="LOGO_D(0:0)" name="douta(0:0)" />
         </block>
         <block symbolname="FIFO" name="XLXI_1">
-            <blockpin signalname="KCVIDEO_FIFO_WR" name="wr_en" />
+            <blockpin signalname="KCVIDEO_FIFO_DATA(31:0)" name="dout(31:0)" />
             <blockpin signalname="KCVIDEO_DATA(31:0)" name="din(31:0)" />
             <blockpin signalname="XLXN_348" name="rd_en" />
-            <blockpin signalname="KCVIDEO_FIFO_DATA(31:0)" name="dout(31:0)" />
             <blockpin signalname="XLXN_349" name="empty" />
             <blockpin signalname="CLK_108_MHz" name="clk" />
             <blockpin signalname="RESET" name="rst" />
             <blockpin signalname="XLXN_1161" name="full" />
+            <blockpin signalname="KCVIDEO_FIFO_WR" name="wr_en" />
         </block>
         <block symbolname="PIC32_INTERFACE" name="iPIC32_INTERFACE">
-            <blockpin signalname="PM_nCS" name="nCS" />
             <blockpin signalname="PM_nWR" name="nWR" />
             <blockpin signalname="PM_nRD" name="nRD" />
-            <blockpin signalname="PM_A(1:0)" name="A(1:0)" />
-            <blockpin signalname="PM_D(7:0)" name="D(7:0)" />
             <blockpin signalname="CLK_108_MHz" name="CLK" />
             <blockpin signalname="nRESET" name="nRESET" />
-            <blockpin name="SRAM_A(0:15)" />
-            <blockpin name="SRAM_D(0:15)" />
+            <blockpin signalname="XLXN_1167" name="FIFO_WR" />
+            <blockpin signalname="XLXN_1166(31:0)" name="SRAM(31:0)" />
+            <blockpin signalname="PM_A(1:0)" name="A(1:0)" />
+            <blockpin signalname="PM_D(7:0)" name="D(7:0)" />
+            <blockpin signalname="XLXN_1168" name="FIFO_FULL" />
+        </block>
+        <block symbolname="PIC32_TO_SRAM_FIFO" name="XLXI_7">
+            <blockpin signalname="CLK_108_MHz" name="clk" />
+            <blockpin signalname="RESET" name="rst" />
+            <blockpin signalname="XLXN_1168" name="full" />
+            <blockpin signalname="XLXN_1166(31:0)" name="din(31:0)" />
+            <blockpin signalname="XLXN_1167" name="wr_en" />
+            <blockpin signalname="XLXN_1171" name="empty" />
+            <blockpin signalname="XLXN_1173(31:0)" name="dout(31:0)" />
+            <blockpin signalname="XLXN_1172" name="rd_en" />
         </block>
     </netlist>
     <sheet sheetnum="1" width="7609" height="5382">
@@ -367,21 +394,6 @@
         </branch>
         <branch name="FIFO_VGA_WR">
             <wire x2="4272" y1="2688" y2="2688" x1="3952" />
-        </branch>
-        <branch name="KCVIDEO_DATA(31:0)">
-            <wire x2="2928" y1="2752" y2="2752" x1="2784" />
-        </branch>
-        <branch name="KCVIDEO_FIFO_WR">
-            <wire x2="2928" y1="2688" y2="2688" x1="2784" />
-        </branch>
-        <branch name="XLXN_349">
-            <wire x2="3344" y1="2624" y2="2624" x1="3216" />
-        </branch>
-        <branch name="XLXN_348">
-            <wire x2="3344" y1="2688" y2="2688" x1="3216" />
-        </branch>
-        <branch name="KCVIDEO_FIFO_DATA(31:0)">
-            <wire x2="3344" y1="2752" y2="2752" x1="3216" />
         </branch>
         <branch name="VGA_ADDR(16:0)">
             <wire x2="4752" y1="2816" y2="2816" x1="3952" />
@@ -448,7 +460,6 @@
         </instance>
         <iomarker fontsize="28" x="1920" y="1856" name="CLK_IN" orien="R180" />
         <iomarker fontsize="28" x="1920" y="2048" name="nRESET" orien="R180" />
-        <iomarker fontsize="28" x="1920" y="3184" name="PM_nCS" orien="R180" />
         <iomarker fontsize="28" x="1920" y="3312" name="PM_nRD" orien="R180" />
         <iomarker fontsize="28" x="1920" y="3376" name="PM_A(1:0)" orien="R180" />
         <iomarker fontsize="28" x="1920" y="3248" name="PM_nWR" orien="R180" />
@@ -516,13 +527,6 @@
         <branch name="FIFO_VGA_FULL">
             <wire x2="4272" y1="2624" y2="2624" x1="3952" />
         </branch>
-        <branch name="XLXN_1152">
-            <wire x2="2832" y1="2816" y2="2816" x1="2784" />
-            <wire x2="2832" y1="2816" y2="3552" x1="2832" />
-            <wire x2="5280" y1="3552" y2="3552" x1="2832" />
-            <wire x2="5280" y1="2944" y2="2944" x1="5200" />
-            <wire x2="5280" y1="2944" y2="3552" x1="5280" />
-        </branch>
         <branch name="PM_D(7:0)">
             <wire x2="2176" y1="3440" y2="3440" x1="1920" />
         </branch>
@@ -534,9 +538,6 @@
         </branch>
         <branch name="PM_nWR">
             <wire x2="2176" y1="3248" y2="3248" x1="1920" />
-        </branch>
-        <branch name="PM_nCS">
-            <wire x2="2176" y1="3184" y2="3184" x1="1920" />
         </branch>
         <branch name="nRESET">
             <attrtext style="alignment:SOFT-BCENTER;fontsize:28;fontname:Arial" attrname="Name" x="3600" y="2048" type="branch" />
@@ -555,10 +556,41 @@
         </branch>
         <instance x="2176" y="3408" name="iPIC32_INTERFACE" orien="R0">
         </instance>
-        <instance x="2928" y="2512" name="XLXI_1" orien="R0">
-        </instance>
         <instance x="2896" y="2112" name="iROM" orien="R0">
         </instance>
+        <branch name="XLXN_349">
+            <wire x2="3344" y1="2624" y2="2624" x1="3264" />
+        </branch>
+        <branch name="XLXN_348">
+            <wire x2="3344" y1="2688" y2="2688" x1="3264" />
+        </branch>
+        <branch name="KCVIDEO_FIFO_DATA(31:0)">
+            <wire x2="3344" y1="2752" y2="2752" x1="3264" />
+        </branch>
+        <branch name="KCVIDEO_DATA(31:0)">
+            <wire x2="2912" y1="2752" y2="2752" x1="2784" />
+        </branch>
+        <branch name="KCVIDEO_FIFO_WR">
+            <wire x2="2912" y1="2688" y2="2688" x1="2784" />
+        </branch>
+        <branch name="XLXN_1161">
+            <wire x2="2912" y1="2624" y2="2624" x1="2784" />
+        </branch>
+        <branch name="RESET">
+            <attrtext style="alignment:SOFT-BCENTER;fontsize:28;fontname:Arial" attrname="Name" x="3600" y="2000" type="branch" />
+            <wire x2="2240" y1="1920" y2="1920" x1="2224" />
+            <wire x2="2272" y1="1920" y2="1920" x1="2240" />
+            <wire x2="2240" y1="1920" y2="2000" x1="2240" />
+            <wire x2="2816" y1="2000" y2="2000" x1="2240" />
+            <wire x2="3600" y1="2000" y2="2000" x1="2816" />
+            <wire x2="4000" y1="2000" y2="2000" x1="3600" />
+            <wire x2="4000" y1="2000" y2="2432" x1="4000" />
+            <wire x2="4016" y1="2432" y2="2432" x1="4000" />
+            <wire x2="2816" y1="2000" y2="2592" x1="2816" />
+            <wire x2="2912" y1="2592" y2="2592" x1="2816" />
+            <wire x2="2816" y1="2592" y2="3280" x1="2816" />
+            <wire x2="2912" y1="3280" y2="3280" x1="2816" />
+        </branch>
         <branch name="CLK_108_MHz">
             <attrtext style="alignment:SOFT-BCENTER;fontsize:28;fontname:Arial" attrname="Name" x="3600" y="1856" type="branch" />
             <wire x2="2096" y1="2096" y2="2304" x1="2096" />
@@ -580,26 +612,46 @@
             <wire x2="4272" y1="2560" y2="2560" x1="3968" />
             <wire x2="3296" y1="1856" y2="2368" x1="3296" />
             <wire x2="3344" y1="2368" y2="2368" x1="3296" />
-            <wire x2="3296" y1="2368" y2="2368" x1="2896" />
-            <wire x2="2896" y1="2368" y2="2560" x1="2896" />
-            <wire x2="2928" y1="2560" y2="2560" x1="2896" />
+            <wire x2="2880" y1="2368" y2="2560" x1="2880" />
+            <wire x2="2912" y1="2560" y2="2560" x1="2880" />
+            <wire x2="2880" y1="2560" y2="3248" x1="2880" />
+            <wire x2="2912" y1="3248" y2="3248" x1="2880" />
+            <wire x2="3296" y1="2368" y2="2368" x1="2880" />
         </branch>
-        <branch name="RESET">
-            <attrtext style="alignment:SOFT-BCENTER;fontsize:28;fontname:Arial" attrname="Name" x="3600" y="2000" type="branch" />
-            <wire x2="2240" y1="1920" y2="1920" x1="2224" />
-            <wire x2="2272" y1="1920" y2="1920" x1="2240" />
-            <wire x2="2240" y1="1920" y2="2000" x1="2240" />
-            <wire x2="2816" y1="2000" y2="2000" x1="2240" />
-            <wire x2="3600" y1="2000" y2="2000" x1="2816" />
-            <wire x2="4000" y1="2000" y2="2000" x1="3600" />
-            <wire x2="4000" y1="2000" y2="2432" x1="4000" />
-            <wire x2="4016" y1="2432" y2="2432" x1="4000" />
-            <wire x2="2816" y1="2000" y2="2560" x1="2816" />
-            <wire x2="2816" y1="2560" y2="2592" x1="2816" />
-            <wire x2="2928" y1="2592" y2="2592" x1="2816" />
+        <instance x="2944" y="2512" name="XLXI_1" orien="R0">
+        </instance>
+        <instance x="2944" y="3184" name="XLXI_7" orien="R0">
+        </instance>
+        <branch name="XLXN_1166(31:0)">
+            <wire x2="2800" y1="3440" y2="3440" x1="2784" />
+            <wire x2="2912" y1="3440" y2="3440" x1="2800" />
         </branch>
-        <branch name="XLXN_1161">
-            <wire x2="2928" y1="2624" y2="2624" x1="2784" />
+        <branch name="XLXN_1167">
+            <wire x2="2800" y1="3376" y2="3376" x1="2784" />
+            <wire x2="2912" y1="3376" y2="3376" x1="2800" />
+        </branch>
+        <branch name="XLXN_1168">
+            <wire x2="2800" y1="3312" y2="3312" x1="2784" />
+            <wire x2="2912" y1="3312" y2="3312" x1="2800" />
+        </branch>
+        <branch name="XLXN_1171">
+            <wire x2="3328" y1="3312" y2="3312" x1="3264" />
+            <wire x2="3344" y1="3312" y2="3312" x1="3328" />
+        </branch>
+        <branch name="XLXN_1172">
+            <wire x2="3328" y1="3376" y2="3376" x1="3264" />
+            <wire x2="3344" y1="3376" y2="3376" x1="3328" />
+        </branch>
+        <branch name="XLXN_1173(31:0)">
+            <wire x2="3328" y1="3440" y2="3440" x1="3264" />
+            <wire x2="3344" y1="3440" y2="3440" x1="3328" />
+        </branch>
+        <branch name="XLXN_1174">
+            <wire x2="3312" y1="2816" y2="2816" x1="2784" />
+            <wire x2="3312" y1="2816" y2="3536" x1="3312" />
+            <wire x2="5264" y1="3536" y2="3536" x1="3312" />
+            <wire x2="5264" y1="2944" y2="2944" x1="5200" />
+            <wire x2="5264" y1="2944" y2="3536" x1="5264" />
         </branch>
     </sheet>
 </drawing>

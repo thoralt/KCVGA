@@ -1,105 +1,91 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    20:08:46 03/01/2015 
--- Design Name: 
--- Module Name:    PIC32_INTERFACE - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
-----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+use IEEE.NUMERIC_STD.ALL;
+use IEEE.STD_LOGIC_UNSIGNED."+";
+use IEEE.STD_LOGIC_UNSIGNED."-";
+use IEEE.STD_LOGIC_UNSIGNED."=";
 
 entity PIC32_INTERFACE is
-    Port ( CLK   : in     STD_LOGIC;
-		   nRESET: in     STD_LOGIC;
-		   A     : in     STD_LOGIC_VECTOR (1 downto 0);
-           D     : inout  STD_LOGIC_VECTOR (7 downto 0);
-		   SRAM_A: in     STD_LOGIC_VECTOR (15 downto 0);
-           SRAM_D: inout  STD_LOGIC_VECTOR (15 downto 0);
-           nCS   : in     STD_LOGIC;
-           nWR   : in     STD_LOGIC;
-           nRD   : in     STD_LOGIC);
+    Port ( CLK   :    in     STD_LOGIC;
+           nRESET:    in     STD_LOGIC;
+           A     :    in     STD_LOGIC_VECTOR (1 downto 0);
+           D     :    inout  STD_LOGIC_VECTOR (7 downto 0);
+           SRAM  :    out    STD_LOGIC_VECTOR (31 downto 0);
+		   FIFO_WR:   out    STD_LOGIC;
+           FIFO_FULL: in     STD_LOGIC;
+           nWR:       in     STD_LOGIC;
+           nRD:       in     STD_LOGIC);
 end PIC32_INTERFACE;
 
 architecture Behavioral of PIC32_INTERFACE is
 
--- signal data_buffer0 : std_logic_vector(7 downto 0) := (others=>'0');
--- signal data_buffer1 : std_logic_vector(7 downto 0) := (others=>'0');
--- signal data_buffer2 : std_logic_vector(7 downto 0) := (others=>'0');
--- signal data_buffer3 : std_logic_vector(7 downto 0) := (others=>'0');
--- signal D_buffer     : std_logic_vector(7 downto 0) := (others=>'0');
-
--- signal nRD_previous : STD_LOGIC; -- vorheriger Zustand von nRD
--- signal OE : STD_LOGIC; -- internes Signal Output Enable
+signal D_buffer     : std_logic_vector(7 downto 0) := (others=>'0');
+signal OE           : STD_LOGIC;
+signal nWR_previous : STD_LOGIC;
+signal reg0         : std_logic_vector(7 downto 0) := "10101010"; -- DEBUG
+signal reg1         : std_logic_vector(7 downto 0) := "01010101"; -- DEBUG
+signal reg2         : std_logic_vector(7 downto 0) := "11001100"; -- DEBUG
+signal reg3         : std_logic_vector(7 downto 0) := "00110011"; -- DEBUG
+signal addr         : std_logic_vector(15 downto 0);
+signal data         : std_logic_vector(15 downto 0);
 
 begin
-	--				D <= std_logic_vector(to_unsigned(data_buffer0, D'length));
-	--				data_buffer0 <= TO_INTEGER(D);
 	
 	process(nRESET, CLK)
 	begin
 		if nRESET = '0' then
 			D <= (others => 'Z');
-			-- OE <= '0';
-			-- nRD_previous <= '1';
+			nWR_previous <= '1';
+			OE <= '0';
+
 		elsif rising_edge(CLK) then
-			if nCS = '0' and nRD = '0' and nWR = '1' then
+			-- clear FIFO flag
+			FIFO_WR <= '0';
+
+			if nRD = '0' and nWR = '1' then
+				-- PIC32 is reading from FPGA
+				OE <= '1';
 				if A = "00" then
-					D <= (others => '1');
+					D_buffer <= reg0;
 				elsif A = "01" then
-					D <= (others => '0');
-				elsif A = "01" then
-					D <= (others => '0');
+					D_buffer <= reg1;
+				elsif A = "10" then
+					D_buffer <= reg2;
 				else
-					D <= (others => '0');
+					D_buffer <= reg3;
 				end if;
 			else
-				D <= (others => 'Z');
+				-- PIC32 is writing to FPGA
+				OE <= '0';
+				if nWR = '0' and nWR_previous = '1' then
+					-- falling edge of nWR detected
+					if A = "00" then
+						-- copy lower 8 bits of address
+						addr(7 downto 0) <= D;
+					elsif A = "01" then
+						-- copy upper 8 bits of address
+						addr(15 downto 8) <= D;
+					elsif A = "10" then
+						-- copy lower 8 bits of data
+						data(7 downto 0) <= D;
+					else
+						-- copy upper 8 bits of data and start FIFO write
+						data(15 downto 8) <= D;
+						if FIFO_FULL = '0' then
+							SRAM(15 downto 0) <= data;
+							SRAM(31 downto 16) <= addr;
+							FIFO_WR <= '1';
+							addr <= addr + 1;
+						end if;
+					end if;
+				end if;
 			end if;
-			-- nRD_previous <= nRD; -- wird erst im n�chsten Takt sichtbar
-			-- if nCS = '0' and nRD = '0' and nRD_previous = '1' then
-			-- 	OE <= '1';
-			-- 	case A is
-			-- 		when "00" =>		D_buffer <= data_buffer0;
-			-- 		when "01" =>		D_buffer <= data_buffer1;
-			-- 		when "10" =>		D_buffer <= data_buffer2;
-			-- 		when "11" => 		D_buffer <= data_buffer3;
-			-- 		when others =>		OE <= '0';
-			-- 	end case;
-			-- elsif nCS = '0' and nWR = '0' then
-			-- 	case A is
-			-- 		when "00" =>		data_buffer0 <= D;
-			-- 		when "01" =>		data_buffer1 <= D;
-			-- 		when "10" =>		data_buffer2 <= D;
-			-- 		when "11" =>		data_buffer3 <= D;
-			-- 		when others =>		OE <= '0';
-			-- 	end case;
-			-- else
-			-- 	OE <= '0';
-			-- end if;
+
+			nWR_previous <= nWR;
 		end if;
+
 	end process;
-	
-	-- D <= D_buffer when OE = '1' else (others => 'Z');
+
+	D <= D_buffer when OE = '1' else (others => 'Z');
 	
 end Behavioral;

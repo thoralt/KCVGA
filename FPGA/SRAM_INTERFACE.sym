@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <symbol version="7" name="SRAM_INTERFACE">
     <symboltype>BLOCK</symboltype>
-    <timestamp>2020-3-16T21:54:47</timestamp>
+    <timestamp>2020-3-19T21:5:19</timestamp>
     <pin polarity="Input" x="0" y="-480" name="nRESET" />
     <pin polarity="Input" x="0" y="-32" name="KCVIDEO_DATA(31:0)" />
     <pin polarity="Input" x="0" y="-416" name="CLK" />
@@ -20,6 +20,9 @@
     <pin polarity="BiDirectional" x="608" y="592" name="D(15:0)" />
     <pin polarity="Output" x="608" y="528" name="nBLE" />
     <pin polarity="Output" x="608" y="464" name="nBHE" />
+    <pin polarity="Input" x="0" y="656" name="PIC32_DATA(31:0)" />
+    <pin polarity="Output" x="0" y="592" name="PIC32_FIFO_RD" />
+    <pin polarity="Input" x="0" y="528" name="PIC32_FIFO_EMPTY" />
     <graph>
         <attrtext style="fontsize:24;fontname:Arial" attrname="PinName" x="72" y="-480" type="pin nRESET" />
         <attrtext style="fontsize:24;fontname:Arial" attrname="PinName" x="72" y="-32" type="pin KCVIDEO_DATA(31:0)" />
@@ -70,5 +73,12 @@
         <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="552" cy="400" />
         <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="552" cy="464" />
         <circle style="fillcolor:rgb(255,255,255);fillstyle:Solid" r="8" cx="552" cy="528" />
+        <line x2="0" y1="528" y2="528" x1="64" />
+        <line x2="0" y1="592" y2="592" x1="64" />
+        <line x2="0" y1="656" y2="656" x1="64" />
+        <rect width="64" x="0" y="644" height="24" />
+        <attrtext style="fontsize:24;fontname:Arial" attrname="PinName" x="72" y="656" type="pin PIC32_DATA(31:0)" />
+        <attrtext style="fontsize:24;fontname:Arial" attrname="PinName" x="72" y="592" type="pin PIC32_FIFO_RD" />
+        <attrtext style="fontsize:24;fontname:Arial" attrname="PinName" x="72" y="528" type="pin PIC32_FIFO_EMPTY" />
     </graph>
 </symbol>
