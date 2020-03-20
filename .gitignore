@@ -27,7 +27,6 @@ PIC32/firmware/KCVGA.X/dist/
 *.pad
 *.par
 *.pcf
-*.prj
 *.ptwx
 *.rbb
 *.rbd
