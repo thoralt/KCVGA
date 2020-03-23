@@ -191,6 +191,16 @@ static void APP_Task(void)
             FPGA_Reset();
             break;
             
+        case 'b':
+        {
+            int i = 1024*1024;
+            uint32_t bufSize = CDC_FillBuffer();
+            while(i > 0)
+            {
+                if(CDC_SendFullBuffer()) i -= bufSize;
+            }
+            break;
+        }
         default:
             APP_UnknownCommand(c);
             break;

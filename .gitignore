@@ -83,3 +83,4 @@ FPGA/ipcore_dir/FIFO_PIC32
 
 # End of https://www.gitignore.io/api/xilinxise
 
+/bootloader.X/build/

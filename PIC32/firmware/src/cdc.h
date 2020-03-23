@@ -48,6 +48,8 @@ void CDC_Tasks(void);
 QueueHandle_t CDC_RX_Queue;
 QueueHandle_t CDC_TX_Queue;
 
+bool CDC_SendFullBuffer();
+uint32_t CDC_FillBuffer();
 
 #ifdef __cplusplus
 }

@@ -11,7 +11,7 @@ entity PIC32_INTERFACE is
            A     :    in     STD_LOGIC_VECTOR (1 downto 0);
            D     :    inout  STD_LOGIC_VECTOR (7 downto 0);
            SRAM  :    out    STD_LOGIC_VECTOR (31 downto 0);
-		   FIFO_WR:   out    STD_LOGIC;
+           FIFO_WR:   out    STD_LOGIC;
            FIFO_FULL: in     STD_LOGIC;
            nWR:       in     STD_LOGIC;
            nRD:       in     STD_LOGIC);
@@ -30,62 +30,62 @@ signal addr         : std_logic_vector(15 downto 0);
 signal data         : std_logic_vector(15 downto 0);
 
 begin
-	
-	process(nRESET, CLK)
-	begin
-		if nRESET = '0' then
-			D <= (others => 'Z');
-			nWR_previous <= '1';
-			OE <= '0';
 
-		elsif rising_edge(CLK) then
-			-- clear FIFO flag
-			FIFO_WR <= '0';
+    process(nRESET, CLK)
+    begin
+        if nRESET = '0' then
+            D <= (others => 'Z');
+            nWR_previous <= '1';
+            OE <= '0';
 
-			if nRD = '0' and nWR = '1' then
-				-- PIC32 is reading from FPGA
-				OE <= '1';
-				if A = "00" then
-					D_buffer <= reg0;
-				elsif A = "01" then
-					D_buffer <= reg1;
-				elsif A = "10" then
-					D_buffer <= reg2;
-				else
-					D_buffer <= reg3;
-				end if;
-			else
-				-- PIC32 is writing to FPGA
-				OE <= '0';
-				if nWR = '0' and nWR_previous = '1' then
-					-- falling edge of nWR detected
-					if A = "00" then
-						-- copy lower 8 bits of address
-						addr(7 downto 0) <= D;
-					elsif A = "01" then
-						-- copy upper 8 bits of address
-						addr(15 downto 8) <= D;
-					elsif A = "10" then
-						-- copy lower 8 bits of data
-						data(7 downto 0) <= D;
-					else
-						-- copy upper 8 bits of data and start FIFO write
-						data(15 downto 8) <= D;
-						if FIFO_FULL = '0' then
-							SRAM(15 downto 0) <= data;
-							SRAM(31 downto 16) <= addr;
-							FIFO_WR <= '1';
-							addr <= addr + 1;
-						end if;
-					end if;
-				end if;
-			end if;
+        elsif rising_edge(CLK) then
+            -- clear FIFO flag
+            FIFO_WR <= '0';
 
-			nWR_previous <= nWR;
-		end if;
+            if nRD = '0' and nWR = '1' then
+                -- PIC32 is reading from FPGA
+                OE <= '1';
+                if A = "00" then
+                    D_buffer <= reg0;
+                elsif A = "01" then
+                    D_buffer <= reg1;
+                elsif A = "10" then
+                    D_buffer <= reg2;
+                else
+                    D_buffer <= reg3;
+                end if;
+            else
+                -- PIC32 is writing to FPGA
+                OE <= '0';
+                if nWR = '0' and nWR_previous = '1' then
+                    -- falling edge of nWR detected
+                    if A = "00" then
+                        -- copy lower 8 bits of address
+                        addr(7 downto 0) <= D;
+                    elsif A = "01" then
+                        -- copy upper 8 bits of address
+                        addr(15 downto 8) <= D;
+                    elsif A = "10" then
+                        -- copy lower 8 bits of data
+                        data(7 downto 0) <= D;
+                    else
+                        -- copy upper 8 bits of data and start FIFO write
+                        data(15 downto 8) <= D;
+                        if FIFO_FULL = '0' then
+                            SRAM(15 downto 0) <= data;
+                            SRAM(31 downto 16) <= addr;
+                            FIFO_WR <= '1';
+                            addr <= addr + 1;
+                        end if;
+                    end if;
+                end if;
+            end if;
 
-	end process;
+            nWR_previous <= nWR;
+        end if;
 
-	D <= D_buffer when OE = '1' else (others => 'Z');
-	
+    end process;
+
+    D <= D_buffer when OE = '1' else (others => 'Z');
+
 end Behavioral;

@@ -59,6 +59,7 @@
 // *****************************************************************************
 
 
+void TIMER_2_InterruptHandler( void );
 void DRV_USBFS_USB_Handler( void );
 void SPI_1_InterruptHandler( void );
 
@@ -66,6 +67,11 @@ void SPI_1_InterruptHandler( void );
 
 /* All the handlers are defined here.  Each will call its PLIB-specific function. */
 
+
+void TIMER_2_Handler (void)
+{
+    TIMER_2_InterruptHandler();
+}
 
 void USB_1_Handler (void)
 {

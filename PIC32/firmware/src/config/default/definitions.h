@@ -50,6 +50,7 @@
 #include <stdbool.h>
 #include "usb/usb_device_cdc.h"
 #include "usb/usb_cdc.h"
+#include "peripheral/tmr/plib_tmr2.h"
 #include "peripheral/clk/plib_clk.h"
 #include "peripheral/gpio/plib_gpio.h"
 #include "peripheral/evic/plib_evic.h"

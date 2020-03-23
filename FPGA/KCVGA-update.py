@@ -1,8 +1,11 @@
 # -*- coding: utf8 -*-
-import serial
+import serial # pip install pyserial
 import struct
 import os
 import time
+import sys
+import curses # pip install cursed
+import argparse
 
 # Print iterations progress
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, \
@@ -27,18 +30,14 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total: 
         print()
 
-def configureFPGA(filename, port):
+def configureFPGA(filename, ser):
     """
     Sends a configuration bitstream to the FPGA using a (virtual) serial port
     @params:
         filename    - Required: input file name
-        port        - Required: com port device
+        ser         - Required: opened servial com port
     @return: True if successful, False if error
     """
-
-    if not os.path.exists(port):
-        print("Error: Could not find port '%s'." % port)
-        return False
 
     if not os.path.exists(filename):
         print("Error: Could not find file '%s'." % filename)
@@ -57,8 +56,7 @@ def configureFPGA(filename, port):
     with open(filename, mode='rb') as file:
         data = bytes(file.read())
 
-    # open serial port and start FPGA configuration by writing 'f'
-    ser = serial.Serial(port)
+    # start FPGA configuration by writing 'f'
     ser.write('f');
 
     # write the number of bytes to expect as binary representation
@@ -103,21 +101,108 @@ def configureFPGA(filename, port):
 
     print
     print(ser.readline())
-    ser.close()
     return True
+def maxw(s, w):
+    return s + ' ' * (w-len(s))
 
-port = '/dev/cu.usbmodem145201'
-filename = 'TOP_LEVEL.bit'
-changedate = os.path.getmtime(filename)
+def main(win, args):
+    try:
+        win.nodelay(True)
+        curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_WHITE)
+        curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_WHITE)
+        curses.init_pair(3, curses.COLOR_RED, curses.COLOR_WHITE)
+        curses.curs_set(1)
+        h, w = win.getmaxyx()
 
-if not configureFPGA(filename, port):
-    sys.exit()
+        CGREEN = curses.color_pair(1)
+        CYELLOW = curses.color_pair(2)
+        CRED = curses.color_pair(3)
 
-# check file modification time in endless loop
-while True:
-    if os.path.getmtime(filename) > changedate:
-        changedate = os.path.getmtime(filename)
-        if not configureFPGA(filename, port):
-            sys.exit()
+        connected = False
+        port = args["port"]
+        filename = args["bitstream"]
 
-    time.sleep(1)
+        if filename is not None:
+            changedate = os.path.getmtime(filename)
+
+        while True:
+            sleep = True
+
+            # check if port is available
+            if os.path.exists(port):
+                if not connected:
+                    y, x = win.getyx()
+                    win.addstr(0, 0, maxw('Connected', w), curses.A_BOLD | CGREEN)
+                    win.move(y, x)
+                    ser = serial.Serial(port)
+                    connected = True
+            else:
+                if connected:
+                    y, x = win.getyx()
+                    win.addstr(0, 0, maxw('Disconnected', w), curses.A_BOLD | CRED)
+                    win.move(y, x)
+                    ser.close()
+                    connected = False
+
+            if filename is not None and os.path.getmtime(filename) > changedate:
+                changedate = os.path.getmtime(filename)
+                if not configureFPGA(filename, port):
+                    sys.exit()
+
+            # handle keyboard input
+            key = win.getch()
+            if not key == curses.ERR:
+                win.refresh()
+                if key == 27:
+                    return
+                elif key == ord('f'):
+                    if filename is not None:
+                        configureFPGA(filename, ser)
+                    else:
+                        win.addstr(0, 20, 'No filename provided in command line arguments')
+                elif key == ord('b'):
+                    ser.write('b')
+                    print('Starting benchmark: ')
+                    win.refresh()
+                    time1 = time.time()
+                    bytecounter = 0
+                    while bytecounter < 1024*1024:
+                        i = max(1, min(4096, ser.in_waiting))
+                        if(i > 0):
+                            dummy = ser.read(i)
+                            bytecounter += i
+
+                    time2 = time.time()
+                    print('Received 1M bytes in %.2f seconds: %.2f kB/s' % (time2-time1, 1024/(time2-time1)))
+                    win.refresh()
+                else:
+                    ser.write(chr(key))
+                    sleep = False
+
+            # print any pending input from the serial port to the screen,
+            # ignore all errors which could occur when disconnecting the
+            # device
+            try:
+                if ser.in_waiting > 0:
+                    while ser.in_waiting > 0:
+                        sys.stdout.write(ser.read())
+                    win.refresh()
+                    sleep = False
+            except:
+                pass
+
+            if sleep == True:
+                time.sleep(0.1)
+
+    except KeyboardInterrupt:
+        return
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-b", "--bitstream", required=False, help="FPGA bitstream file")
+ap.add_argument("-p", "--port", required=True, help="KCVGA serial port")
+ap.add_argument("-u", "--upload-only", required=False, dest="uploadonly", action="store_true", help="only upload FPGA bitstream, do not enter interactive terminal mode")
+ap.set_defaults(uploadonly=False)
+args = vars(ap.parse_args())
+
+os.environ.setdefault('ESCDELAY', '25')
+curses.wrapper(main, args)

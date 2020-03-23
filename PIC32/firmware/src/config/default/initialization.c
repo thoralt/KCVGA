@@ -194,6 +194,8 @@ void SYS_Initialize ( void* data )
 
 	GPIO_Initialize();
 
+    TMR2_Initialize();
+
 	SPI1_Initialize();
 
 

@@ -16,8 +16,6 @@ static uint8_t DMA_READY_BUFFER m_RXBytes[CDC_BUF_SIZE];
 USB_DEVICE_CDC_TRANSFER_HANDLE m_RXHandle;
 USB_DEVICE_CDC_TRANSFER_HANDLE m_TXHandle;
 
-
-
 CDC_DATA cdcData;
 
 //=============================================================================
@@ -192,6 +190,7 @@ void _mon_putc(char c)
 //-----------------------------------------------------------------------------
 static void USB_TX_Task(void)
 {
+    size_t size = 0;
     if(!cdcData.isConfigured)
     {
         // block TX until device is configured
@@ -199,24 +198,23 @@ static void USB_TX_Task(void)
         return;
     }
 
-    // schedule a write if no TX is in progress and data is pending
+    // Is the CDC module ready to receive a new TX buffer and are there
+    // messages waiting in the TX queue?
     if(m_TXHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID &&
-       uxQueueMessagesWaiting(CDC_TX_Queue) > 0)
+        uxQueueMessagesWaiting(CDC_TX_Queue) > 0)
     {
-        // transfer bytes from queuer to TX buffer until either queue
+        // transfer bytes from queue to TX buffer until either queue
         // is empty or TX buffer is full
-        size_t size = 0;
         while(uxQueueMessagesWaiting(CDC_TX_Queue)>0 && size<sizeof(m_TXBytes))
         {
             xQueueReceive(CDC_TX_Queue, &m_TXBytes[size++], 0);
         }
 
-        // schedule USB write
         USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-                &m_TXHandle,
-                m_TXBytes,
-                size,
-                USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+        &m_TXHandle,
+        m_TXBytes,
+        size,
+        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
     }
 }
 
@@ -264,6 +262,29 @@ void CDC_Initialize(void)
     m_TXHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
     CDC_RX_Queue = xQueueCreate(CDC_BUF_SIZE, sizeof(unsigned char));
     CDC_TX_Queue = xQueueCreate(CDC_BUF_SIZE, sizeof(unsigned char));
+}
+
+uint32_t CDC_FillBuffer()
+{
+    int i;
+    for(i=0; i<CDC_BUF_SIZE; i++) m_TXBytes[i] = 'x';
+    return CDC_BUF_SIZE;
+}
+bool CDC_SendFullBuffer()
+{
+    if(m_TXHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID)
+    {
+        USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+        &m_TXHandle,
+        m_TXBytes,
+        CDC_BUF_SIZE,
+        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 //-----------------------------------------------------------------------------

@@ -393,13 +393,16 @@
             <wire x2="4272" y1="2464" y2="2496" x1="4272" />
         </branch>
         <branch name="FIFO_VGA_WR">
-            <wire x2="4272" y1="2688" y2="2688" x1="3952" />
+            <wire x2="4256" y1="2688" y2="2688" x1="3952" />
+            <wire x2="4272" y1="2688" y2="2688" x1="4256" />
         </branch>
         <branch name="VGA_ADDR(16:0)">
-            <wire x2="4752" y1="2816" y2="2816" x1="3952" />
+            <wire x2="4736" y1="2816" y2="2816" x1="3952" />
+            <wire x2="4752" y1="2816" y2="2816" x1="4736" />
         </branch>
         <branch name="FIFO_VGA_DATA(14:0)">
-            <wire x2="4272" y1="2752" y2="2752" x1="3952" />
+            <wire x2="4256" y1="2752" y2="2752" x1="3952" />
+            <wire x2="4272" y1="2752" y2="2752" x1="4256" />
         </branch>
         <branch name="VGA_DATA(14:0)">
             <wire x2="4752" y1="2752" y2="2752" x1="4688" />
@@ -408,7 +411,8 @@
             <wire x2="4752" y1="2688" y2="2688" x1="4688" />
         </branch>
         <branch name="VGA_ADDR_WR">
-            <wire x2="4752" y1="2880" y2="2880" x1="3952" />
+            <wire x2="4736" y1="2880" y2="2880" x1="3952" />
+            <wire x2="4752" y1="2880" y2="2880" x1="4736" />
         </branch>
         <branch name="VGA_B(3:0)">
             <wire x2="5280" y1="2880" y2="2880" x1="5200" />
@@ -426,25 +430,32 @@
             <wire x2="5280" y1="2752" y2="2752" x1="5200" />
         </branch>
         <branch name="SRAM_nCE">
-            <wire x2="4000" y1="3056" y2="3056" x1="3952" />
+            <wire x2="3984" y1="3056" y2="3056" x1="3952" />
+            <wire x2="4000" y1="3056" y2="3056" x1="3984" />
         </branch>
         <branch name="SRAM_nOE">
-            <wire x2="4000" y1="3120" y2="3120" x1="3952" />
+            <wire x2="3984" y1="3120" y2="3120" x1="3952" />
+            <wire x2="4000" y1="3120" y2="3120" x1="3984" />
         </branch>
         <branch name="SRAM_nWE">
-            <wire x2="4000" y1="3184" y2="3184" x1="3952" />
+            <wire x2="3984" y1="3184" y2="3184" x1="3952" />
+            <wire x2="4000" y1="3184" y2="3184" x1="3984" />
         </branch>
         <branch name="SRAM_nBHE">
-            <wire x2="4000" y1="3248" y2="3248" x1="3952" />
+            <wire x2="3984" y1="3248" y2="3248" x1="3952" />
+            <wire x2="4000" y1="3248" y2="3248" x1="3984" />
         </branch>
         <branch name="SRAM_nBLE">
-            <wire x2="4000" y1="3312" y2="3312" x1="3952" />
+            <wire x2="3984" y1="3312" y2="3312" x1="3952" />
+            <wire x2="4000" y1="3312" y2="3312" x1="3984" />
         </branch>
         <branch name="SRAM_D(15:0)">
-            <wire x2="4000" y1="3376" y2="3376" x1="3952" />
+            <wire x2="3984" y1="3376" y2="3376" x1="3952" />
+            <wire x2="4000" y1="3376" y2="3376" x1="3984" />
         </branch>
         <branch name="SRAM_A(16:0)">
-            <wire x2="4000" y1="3440" y2="3440" x1="3952" />
+            <wire x2="3984" y1="3440" y2="3440" x1="3952" />
+            <wire x2="4000" y1="3440" y2="3440" x1="3984" />
         </branch>
         <instance x="2000" y="1952" name="ResetInverter" orien="R0" />
         <instance x="2272" y="1952" name="iMAIN_CLK" orien="R0">
@@ -454,8 +465,6 @@
         <instance x="4208" y="2320" name="FIFO_VGA" orien="R0">
         </instance>
         <instance x="4016" y="2560" name="OR_FIFO_VGA_RESET" orien="R0" />
-        <instance x="3344" y="2784" name="iSRAM_INTERFACE" orien="R0">
-        </instance>
         <instance x="2176" y="2784" name="iKCVIDEO_INTERFACE" orien="R0">
         </instance>
         <iomarker fontsize="28" x="1920" y="1856" name="CLK_IN" orien="R180" />
@@ -470,7 +479,8 @@
         <iomarker fontsize="28" x="5280" y="2816" name="VGA_G(3:0)" orien="R0" />
         <iomarker fontsize="28" x="5280" y="2880" name="VGA_B(3:0)" orien="R0" />
         <branch name="XLXN_1141">
-            <wire x2="4016" y1="2496" y2="2496" x1="3952" />
+            <wire x2="4000" y1="2496" y2="2496" x1="3952" />
+            <wire x2="4016" y1="2496" y2="2496" x1="4000" />
         </branch>
         <iomarker fontsize="28" x="4000" y="3056" name="SRAM_nCE" orien="R0" />
         <iomarker fontsize="28" x="4000" y="3120" name="SRAM_nOE" orien="R0" />
@@ -525,7 +535,8 @@
         </branch>
         <iomarker fontsize="28" x="4720" y="2944" name="SCANLINES" orien="R180" />
         <branch name="FIFO_VGA_FULL">
-            <wire x2="4272" y1="2624" y2="2624" x1="3952" />
+            <wire x2="4256" y1="2624" y2="2624" x1="3952" />
+            <wire x2="4272" y1="2624" y2="2624" x1="4256" />
         </branch>
         <branch name="PM_D(7:0)">
             <wire x2="2176" y1="3440" y2="3440" x1="1920" />
@@ -539,34 +550,10 @@
         <branch name="PM_nWR">
             <wire x2="2176" y1="3248" y2="3248" x1="1920" />
         </branch>
-        <branch name="nRESET">
-            <attrtext style="alignment:SOFT-BCENTER;fontsize:28;fontname:Arial" attrname="Name" x="3600" y="2048" type="branch" />
-            <wire x2="2000" y1="2048" y2="2048" x1="1920" />
-            <wire x2="3344" y1="2048" y2="2048" x1="2000" />
-            <wire x2="3344" y1="2048" y2="2304" x1="3344" />
-            <wire x2="3600" y1="2048" y2="2048" x1="3344" />
-            <wire x2="4736" y1="2048" y2="2048" x1="3600" />
-            <wire x2="4736" y1="2048" y2="2496" x1="4736" />
-            <wire x2="4752" y1="2496" y2="2496" x1="4736" />
-            <wire x2="2000" y1="2048" y2="2240" x1="2000" />
-            <wire x2="2176" y1="2240" y2="2240" x1="2000" />
-            <wire x2="2000" y1="2240" y2="3056" x1="2000" />
-            <wire x2="2176" y1="3056" y2="3056" x1="2000" />
-            <wire x2="2000" y1="1920" y2="2048" x1="2000" />
-        </branch>
         <instance x="2176" y="3408" name="iPIC32_INTERFACE" orien="R0">
         </instance>
         <instance x="2896" y="2112" name="iROM" orien="R0">
         </instance>
-        <branch name="XLXN_349">
-            <wire x2="3344" y1="2624" y2="2624" x1="3264" />
-        </branch>
-        <branch name="XLXN_348">
-            <wire x2="3344" y1="2688" y2="2688" x1="3264" />
-        </branch>
-        <branch name="KCVIDEO_FIFO_DATA(31:0)">
-            <wire x2="3344" y1="2752" y2="2752" x1="3264" />
-        </branch>
         <branch name="KCVIDEO_DATA(31:0)">
             <wire x2="2912" y1="2752" y2="2752" x1="2784" />
         </branch>
@@ -590,6 +577,56 @@
             <wire x2="2912" y1="2592" y2="2592" x1="2816" />
             <wire x2="2816" y1="2592" y2="3280" x1="2816" />
             <wire x2="2912" y1="3280" y2="3280" x1="2816" />
+        </branch>
+        <instance x="2944" y="2512" name="XLXI_1" orien="R0">
+        </instance>
+        <instance x="2944" y="3184" name="XLXI_7" orien="R0">
+        </instance>
+        <branch name="XLXN_1166(31:0)">
+            <wire x2="2800" y1="3440" y2="3440" x1="2784" />
+            <wire x2="2912" y1="3440" y2="3440" x1="2800" />
+        </branch>
+        <branch name="XLXN_1167">
+            <wire x2="2800" y1="3376" y2="3376" x1="2784" />
+            <wire x2="2912" y1="3376" y2="3376" x1="2800" />
+        </branch>
+        <branch name="XLXN_1168">
+            <wire x2="2800" y1="3312" y2="3312" x1="2784" />
+            <wire x2="2912" y1="3312" y2="3312" x1="2800" />
+        </branch>
+        <branch name="XLXN_1174">
+            <wire x2="3312" y1="2816" y2="2816" x1="2784" />
+            <wire x2="3312" y1="2816" y2="3536" x1="3312" />
+            <wire x2="5264" y1="3536" y2="3536" x1="3312" />
+            <wire x2="5264" y1="2944" y2="2944" x1="5200" />
+            <wire x2="5264" y1="2944" y2="3536" x1="5264" />
+        </branch>
+        <branch name="XLXN_1173(31:0)">
+            <wire x2="3280" y1="3440" y2="3440" x1="3264" />
+            <wire x2="3328" y1="3440" y2="3440" x1="3280" />
+            <wire x2="3344" y1="3440" y2="3440" x1="3328" />
+        </branch>
+        <branch name="XLXN_1172">
+            <wire x2="3280" y1="3376" y2="3376" x1="3264" />
+            <wire x2="3328" y1="3376" y2="3376" x1="3280" />
+            <wire x2="3344" y1="3376" y2="3376" x1="3328" />
+        </branch>
+        <branch name="XLXN_1171">
+            <wire x2="3280" y1="3312" y2="3312" x1="3264" />
+            <wire x2="3328" y1="3312" y2="3312" x1="3280" />
+            <wire x2="3344" y1="3312" y2="3312" x1="3328" />
+        </branch>
+        <branch name="KCVIDEO_FIFO_DATA(31:0)">
+            <wire x2="3280" y1="2752" y2="2752" x1="3264" />
+            <wire x2="3344" y1="2752" y2="2752" x1="3280" />
+        </branch>
+        <branch name="XLXN_348">
+            <wire x2="3280" y1="2688" y2="2688" x1="3264" />
+            <wire x2="3344" y1="2688" y2="2688" x1="3280" />
+        </branch>
+        <branch name="XLXN_349">
+            <wire x2="3280" y1="2624" y2="2624" x1="3264" />
+            <wire x2="3344" y1="2624" y2="2624" x1="3280" />
         </branch>
         <branch name="CLK_108_MHz">
             <attrtext style="alignment:SOFT-BCENTER;fontsize:28;fontname:Arial" attrname="Name" x="3600" y="1856" type="branch" />
@@ -618,40 +655,22 @@
             <wire x2="2912" y1="3248" y2="3248" x1="2880" />
             <wire x2="3296" y1="2368" y2="2368" x1="2880" />
         </branch>
-        <instance x="2944" y="2512" name="XLXI_1" orien="R0">
+        <branch name="nRESET">
+            <attrtext style="alignment:SOFT-BCENTER;fontsize:28;fontname:Arial" attrname="Name" x="3600" y="2048" type="branch" />
+            <wire x2="2000" y1="2048" y2="2048" x1="1920" />
+            <wire x2="3344" y1="2048" y2="2048" x1="2000" />
+            <wire x2="3600" y1="2048" y2="2048" x1="3344" />
+            <wire x2="4736" y1="2048" y2="2048" x1="3600" />
+            <wire x2="4736" y1="2048" y2="2496" x1="4736" />
+            <wire x2="4752" y1="2496" y2="2496" x1="4736" />
+            <wire x2="3344" y1="2048" y2="2304" x1="3344" />
+            <wire x2="2000" y1="2048" y2="2240" x1="2000" />
+            <wire x2="2176" y1="2240" y2="2240" x1="2000" />
+            <wire x2="2000" y1="2240" y2="3056" x1="2000" />
+            <wire x2="2176" y1="3056" y2="3056" x1="2000" />
+            <wire x2="2000" y1="1920" y2="2048" x1="2000" />
+        </branch>
+        <instance x="3344" y="2784" name="iSRAM_INTERFACE" orien="R0">
         </instance>
-        <instance x="2944" y="3184" name="XLXI_7" orien="R0">
-        </instance>
-        <branch name="XLXN_1166(31:0)">
-            <wire x2="2800" y1="3440" y2="3440" x1="2784" />
-            <wire x2="2912" y1="3440" y2="3440" x1="2800" />
-        </branch>
-        <branch name="XLXN_1167">
-            <wire x2="2800" y1="3376" y2="3376" x1="2784" />
-            <wire x2="2912" y1="3376" y2="3376" x1="2800" />
-        </branch>
-        <branch name="XLXN_1168">
-            <wire x2="2800" y1="3312" y2="3312" x1="2784" />
-            <wire x2="2912" y1="3312" y2="3312" x1="2800" />
-        </branch>
-        <branch name="XLXN_1171">
-            <wire x2="3328" y1="3312" y2="3312" x1="3264" />
-            <wire x2="3344" y1="3312" y2="3312" x1="3328" />
-        </branch>
-        <branch name="XLXN_1172">
-            <wire x2="3328" y1="3376" y2="3376" x1="3264" />
-            <wire x2="3344" y1="3376" y2="3376" x1="3328" />
-        </branch>
-        <branch name="XLXN_1173(31:0)">
-            <wire x2="3328" y1="3440" y2="3440" x1="3264" />
-            <wire x2="3344" y1="3440" y2="3440" x1="3328" />
-        </branch>
-        <branch name="XLXN_1174">
-            <wire x2="3312" y1="2816" y2="2816" x1="2784" />
-            <wire x2="3312" y1="2816" y2="3536" x1="3312" />
-            <wire x2="5264" y1="3536" y2="3536" x1="3312" />
-            <wire x2="5264" y1="2944" y2="2944" x1="5200" />
-            <wire x2="5264" y1="2944" y2="3536" x1="5264" />
-        </branch>
     </sheet>
 </drawing>
