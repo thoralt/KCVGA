@@ -1,411 +1,144 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer:       Thoralt Franz
--- 
--- Create Date:    18:35:41 02/19/2015 
--- Design Name: 
--- Module Name:    SYNC - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
--------------------------------------------------------------------------------
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
-use IEEE.STD_LOGIC_UNSIGNED."+";
-use IEEE.STD_LOGIC_UNSIGNED."-";
-use IEEE.STD_LOGIC_UNSIGNED."=";
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED."+";
+USE IEEE.STD_LOGIC_UNSIGNED."-";
+USE IEEE.STD_LOGIC_UNSIGNED."=";
 
-entity VGA_OUTPUT is
-    port ( CLK           : in  STD_LOGIC;
-           HSYNC         : out STD_LOGIC;
-           VSYNC         : out STD_LOGIC;
-           R, G, B       : out STD_LOGIC_VECTOR(3 downto 0);
-           nRESET        : in  STD_LOGIC;
-           SCANLINES     : in  STD_LOGIC;
-           FRAMESYNC     : out STD_LOGIC;
-           FIFO_RD       : out STD_LOGIC;
-           VGA_ADDR_WR   : out STD_LOGIC;
-           VGA_ADDR      : out STD_LOGIC_VECTOR(16 downto 0);
-           VGA_DATA      : in  STD_LOGIC_VECTOR(14 downto 0));
-end VGA_OUTPUT;
+ENTITY VGA_OUTPUT IS GENERIC
+(
+    --  1280,     1328,         1440,       1688
+    H_PIXELS, H_SYNC_START, H_SYNC_END, H_TOTAL,
+    V_PIXELS, V_SYNC_START, V_SYNC_END, V_TOTAL
+    --    H_PIXELS, H_FRONT_PORCH, H_SYNC_PULSE, H_BACK_PORCH,
+    --    V_PIXELS, V_FRONT_PORCH, V_SYNC_PULSE, V_BACK_PORCH
+    : NATURAL;
+    H_SYNC_POLARITY, V_SYNC_POLARITY : STD_LOGIC
+);
+PORT
+(
+    CLK            : IN STD_LOGIC;
+    HSYNC          : OUT STD_LOGIC;
+    VSYNC          : OUT STD_LOGIC;
+    R, G, B        : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+    nRESET         : IN STD_LOGIC;
+    SCANLINES      : IN STD_LOGIC;
+    FRAMESYNC      : OUT STD_LOGIC;
+    FIFO_RD        : OUT STD_LOGIC;
+    VGA_ADDR_WR    : OUT STD_LOGIC;
+    VGA_FIFO_EMPTY : IN STD_LOGIC;
+    VGA_ADDR       : OUT STD_LOGIC_VECTOR(16 DOWNTO 0);
+    DATA_IN        : IN STD_LOGIC_VECTOR(4 DOWNTO 0));
+END VGA_OUTPUT;
 
-architecture Behavioral of VGA_OUTPUT is
+ARCHITECTURE Behavioral OF VGA_OUTPUT IS
 
--- video mode definition
--- 1280x1024 @ 60 Hz, 108 MHz pixel clock, positive sync
-constant H_PIXELS              : integer := 1280;
-constant H_FRONT_PORCH_LENGTH  : integer := 48;
-constant H_SYNC_PULSE_LENGTH   : integer := 112;
-constant H_BACK_PORCH_LENGTH   : integer := 248;
-constant H_SYNC_PULSE_POLARITY : integer := 1;
+    -- video timing constants, do not change
+    CONSTANT H_ACTIVE_BEGIN : INTEGER := H_TOTAL - H_SYNC_START;
+    CONSTANT H_ACTIVE_END   : INTEGER := H_ACTIVE_BEGIN + H_PIXELS;
+    CONSTANT V_ACTIVE_BEGIN : INTEGER := V_TOTAL - V_SYNC_START;
+    CONSTANT V_ACTIVE_END   : INTEGER := V_ACTIVE_BEGIN + V_PIXELS;
 
-constant V_PIXELS              : integer := 1024;
-constant V_FRONT_PORCH_LENGTH  : integer := 1;
-constant V_SYNC_PULSE_LENGTH   : integer := 3;
-constant V_BACK_PORCH_LENGTH   : integer := 38;
-constant V_SYNC_PULSE_POLARITY : integer := 1;
+    -- horizontal and vertical position counters
+    SIGNAL HPOS             : INTEGER RANGE 0 TO H_TOTAL - 1 := 0;
+    SIGNAL VPOS             : INTEGER RANGE 0 TO V_TOTAL - 1 := 0;
+    SIGNAL PIXEL_MULTIPLIER : INTEGER RANGE 0 TO 3           := 0;
+    SIGNAL LINE_MULTIPLIER  : INTEGER RANGE 0 TO 3           := 0;
+    SIGNAL ADDR             : STD_LOGIC_VECTOR(16 DOWNTO 0); -- current VRAM address
+    SIGNAL PIXEL            : STD_LOGIC_VECTOR(4 DOWNTO 0);  -- latest pixel data from VRAM
 
--- video timing constants, do not change
-constant H_TOTAL          : integer := H_PIXELS+H_SYNC_PULSE_LENGTH+H_BACK_PORCH_LENGTH+H_FRONT_PORCH_LENGTH;
-constant V_TOTAL          : integer := V_PIXELS+V_SYNC_PULSE_LENGTH+V_BACK_PORCH_LENGTH+V_FRONT_PORCH_LENGTH;
-constant H_ACTIVE_BEGIN   : integer := H_SYNC_PULSE_LENGTH+H_BACK_PORCH_LENGTH;
-constant H_ACTIVE_END     : integer := H_SYNC_PULSE_LENGTH+H_BACK_PORCH_LENGTH+H_PIXELS;
-constant V_ACTIVE_BEGIN   : integer := V_SYNC_PULSE_LENGTH+V_BACK_PORCH_LENGTH;
-constant V_ACTIVE_END     : integer := V_SYNC_PULSE_LENGTH+V_BACK_PORCH_LENGTH+V_PIXELS;
+BEGIN
 
--- horizontal and vertical position counters
-signal HPOS               : integer range 0 to H_TOTAL-1 := 0;
-signal VPOS               : integer range 0 to V_TOTAL-1 := 0;
-signal SUBPIXEL_COUNTER   : STD_LOGIC_VECTOR(1 downto 0) := (others => '0');
-signal NIBBLE_COUNTER     : STD_LOGIC_VECTOR(1 downto 0) := (others => '0');
-signal LINE_MULTIPLICATOR : STD_LOGIC_VECTOR(1 downto 0) := (others => '0');
-signal ADDR               : STD_LOGIC_VECTOR(16 downto 0); -- current VRAM address
-signal DATA               : STD_LOGIC_VECTOR(14 downto 0); -- latest pixel data from VRAM
+    -- the ColorGenerator combinatorial network connects the 5 bit color
+    -- vector from SRAM to the R, G, and B outputs (4 bits each)
+    i_ColorGenerator : ENTITY work.ColorGenerator PORT MAP
+        (PIXEL, R, G, B);
 
-    ----------------------------------------------------------------------------
-    -- GET_TEST_COLOR
-    ----------------------------------------------------------------------------
-    function GET_TEST_COLOR(x: integer) return STD_LOGIC_VECTOR is
-        variable ret : STD_LOGIC_VECTOR(3 downto 0);
-    begin
-        if    x<80   then ret := "0000";
-        elsif x<160  then ret := "0001";
-        elsif x<240  then ret := "0010";
-        elsif x<320  then ret := "0011";
-        elsif x<400  then ret := "0100";
-        elsif x<480  then ret := "0101";
-        elsif x<560  then ret := "0110";
-        elsif x<640  then ret := "0111";
-        elsif x<720  then ret := "1000";
-        elsif x<800  then ret := "1001";
-        elsif x<880  then ret := "1010";
-        elsif x<960  then ret := "1011";
-        elsif x<1040 then ret := "1100";
-        elsif x<1120 then ret := "1101";
-        elsif x<1200 then ret := "1110";
-        else              ret := "1111";
-        end if;
-        return ret;
-    end function;
+    i_SyncGenerator : ENTITY work.SyncGenerator GENERIC
+        MAP(
+        H_TOTAL, V_TOTAL, V_ACTIVE_END, H_SYNC_END - H_SYNC_START,
+        V_SYNC_END - V_SYNC_START, H_SYNC_POLARITY, V_SYNC_POLARITY
+        ) PORT
+        MAP(HPOS, VPOS, HSYNC, VSYNC, FRAMESYNC);
 
-    ----------------------------------------------------------------------------
-    -- REDUCE_BRIGHTNESS
-    --
-    -- Reduces the brightness of the input value by multiplying and dividing it
-    -- with a given constants (used for scanline effect).
-    --
-    -- -> input = 4 bit STD_LOGIC_VECTOR
-    --    M = multiplier
-    --    D = divisor
-    -- <- returns 4 bit STD_LOGIC_VECTOR = input * M / D
-    ----------------------------------------------------------------------------
-    function REDUCE_BRIGHTNESS (input : STD_LOGIC_VECTOR(3 downto 0); 
-                                    M : integer;
-                                    D : integer) 
-                                return  STD_LOGIC_VECTOR is
-        variable ret : STD_LOGIC_VECTOR(3 downto 0);
-    begin
-        case input is
-            when "0000" => ret := "0000";
-            when "0001" => ret := STD_LOGIC_VECTOR(to_unsigned( 1 * M/D, 4));
-            when "0010" => ret := STD_LOGIC_VECTOR(to_unsigned( 2 * M/D, 4));
-            when "0011" => ret := STD_LOGIC_VECTOR(to_unsigned( 3 * M/D, 4));
-            when "0100" => ret := STD_LOGIC_VECTOR(to_unsigned( 4 * M/D, 4));
-            when "0101" => ret := STD_LOGIC_VECTOR(to_unsigned( 5 * M/D, 4));
-            when "0110" => ret := STD_LOGIC_VECTOR(to_unsigned( 6 * M/D, 4));
-            when "0111" => ret := STD_LOGIC_VECTOR(to_unsigned( 7 * M/D, 4));
-            when "1000" => ret := STD_LOGIC_VECTOR(to_unsigned( 8 * M/D, 4));
-            when "1001" => ret := STD_LOGIC_VECTOR(to_unsigned( 9 * M/D, 4));
-            when "1010" => ret := STD_LOGIC_VECTOR(to_unsigned(10 * M/D, 4));
-            when "1011" => ret := STD_LOGIC_VECTOR(to_unsigned(11 * M/D, 4));
-            when "1100" => ret := STD_LOGIC_VECTOR(to_unsigned(12 * M/D, 4));
-            when "1101" => ret := STD_LOGIC_VECTOR(to_unsigned(13 * M/D, 4));
-            when "1110" => ret := STD_LOGIC_VECTOR(to_unsigned(14 * M/D, 4));
-            when others => ret := STD_LOGIC_VECTOR(to_unsigned(15 * M/D, 4));
-        end case;
-        return ret;
-    end function;
-
-begin
-    process(CLK, nRESET)
-        variable rr, gg, bb : STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
-    begin
-        if nRESET = '0' then
-            VPOS <= 0;
-            HPOS <= 0;
+    PROCESS (CLK, nRESET)
+    BEGIN
+        IF nRESET = '0' THEN
+            VPOS        <= 0;
+            HPOS        <= 0;
             VGA_ADDR_WR <= '0';
-            SUBPIXEL_COUNTER <= (others => '1');
-            NIBBLE_COUNTER <= (others => '1');
-            LINE_MULTIPLICATOR <= (others => '0');
-            ADDR <= (others => '1');
-            VGA_ADDR <= (others => '1');
+            FIFO_RD     <= '0';
 
-        elsif rising_edge(clk) then
-            FRAMESYNC <= '0';
-
-            -- reset address write flag every cycle
+        ELSIF rising_edge(clk) THEN
             VGA_ADDR_WR <= '0';
+            FIFO_RD     <= '0';
 
-            -- reset FIFO read flag every cycle
-            FIFO_RD <= '0';
+            -- If at beginning of line: Set new address -> starts filling FIFO
+            IF HPOS = 0 THEN
+                PIXEL_MULTIPLIER <= 0;
+                VGA_ADDR         <= ADDR;
+                VGA_ADDR_WR      <= '1';
+            END IF;
 
-            ----------------------------------------------------------------------
-            -- HSYNC TIMING
-            --                             �<- HPOS = 0      
-            -- HSYNC ����������������������\____________/����������������������
-            --                 �<- FRONT ->�<- HSYNC  ->�<- BACK  ->�
-            --                 �   PORCH   �   LENGTH   �   PORCH   �
-            -- Video ���_/�\_/�\____________________________________/�\_/�\_���
-            --                 �                                    �
-            --                 �<- BLANKING during FP, HSYNC, BP  ->�
-            ----------------------------------------------------------------------
-
-            -- load start address at beginning of each line
-            -- SRAM interface will start filling the FIFO with video data 
-            -- for one line starting with the given address
-            if HPOS = 0 then
-                VGA_ADDR <= ADDR;
-                VGA_ADDR_WR <= '1';
-                SUBPIXEL_COUNTER <= (others => '0');
-                NIBBLE_COUNTER <= (others => '0');
-            end if;
-
-            -- horizontal sync pulse
-            -- the "if *_SYNC_PULSE_POLARITY" gets optimized away 
-            -- since *_SYNC_PULSE_POLARITY is defined as a constant
-            if HPOS>=0 and HPOS<H_SYNC_PULSE_LENGTH then
-                if H_SYNC_PULSE_POLARITY = 0 then -- negative polarity
-                    HSYNC <= '0';
-                else
-                    HSYNC <= '1';
-                end if;
-            else
-                if H_SYNC_PULSE_POLARITY = 0 then -- positive polarity
-                    HSYNC <= '1'; 
-                else 
-                    HSYNC <= '0'; 
-                end if;
-            end if;
-
-            -- vertical sync pulse
-            if VPOS >= 0 and VPOS < V_SYNC_PULSE_LENGTH then
-                if V_SYNC_PULSE_POLARITY = 0 then -- negative polarity 
-                    VSYNC <= '0'; 
-                else 
-                    VSYNC <= '1'; 
-                end if;
-            else
-                if V_SYNC_PULSE_POLARITY = 0 then -- positive polarity
-                    VSYNC <= '1'; 
-                else 
-                    VSYNC <= '0'; 
-                end if;
-            end if;
-
-            -- FIFO READ TIMING
-            --
-            --     CLK ____/��1��\_____/��2��\_____/��3��\_____/��4��\___
-            --
-            -- FIFO_RD _____________/�����������\________________________
-            --                                 __________________________
-            --    DATA _______________________/DATA VALID
-
-            -- 1. FIFO_RD is set during clock cycle 1
-            -- 2. FIFO recognizes RD during clock cycle 2
-            --    FIFO delivers next dataword somewhen later in clock cycle 2
-            --    FIFO_RD is reset during clock cycle 2
-            -- 3. data can be read at the beginning of clock cycle 3
-
-            -- request next data word from FIFO 3 cycles before first pixel
-            -- because FIFO_RD is set after the current cycle, the FIFO is
-            -- processing the read request during the next cycle and the
-            -- data word is available to read in the 3rd cycle
-            if HPOS = H_ACTIVE_BEGIN - 3 then
+            -- request first data word
+            IF HPOS = H_ACTIVE_BEGIN - 3 THEN
                 FIFO_RD <= '1';
-            end if;
+            END IF;
 
-            -- load first data word one clock before first pixel
-            if HPOS = H_ACTIVE_BEGIN - 1 then
-                DATA <= VGA_DATA;
-
-                -- request next data word from FIFO, will be loaded
-                -- right before beginning of next pixel
-                FIFO_RD <= '1';
-            end if;
+            -- read first data word
+            IF HPOS = H_ACTIVE_BEGIN - 1 THEN
+                PIXEL <= DATA_IN;
+            END IF;
 
             -- are we inside the active video region?
-            if  HPOS >= H_ACTIVE_BEGIN and HPOS < H_ACTIVE_END
-            and VPOS >= V_ACTIVE_BEGIN and VPOS < V_ACTIVE_END then
-
-
---              if HPOS = H_ACTIVE_BEGIN + 640 or VPOS = V_ACTIVE_BEGIN + 512
---              or (HPOS-H_ACTIVE_BEGIN=0          and VPOS-V_ACTIVE_BEGIN>= 0          and VPOS-V_ACTIVE_BEGIN< 10)
---              or (HPOS-H_ACTIVE_BEGIN=0          and VPOS-V_ACTIVE_BEGIN>=V_PIXELS-10 and VPOS-V_ACTIVE_BEGIN<V_PIXELS)
---              or (HPOS-H_ACTIVE_BEGIN=H_PIXELS-1 and VPOS-V_ACTIVE_BEGIN>=0           and VPOS-V_ACTIVE_BEGIN< 10)
---              or (HPOS-H_ACTIVE_BEGIN=H_PIXELS-1 and VPOS-V_ACTIVE_BEGIN>=V_PIXELS-10 and VPOS-V_ACTIVE_BEGIN<V_PIXELS)
---              or (VPOS-V_ACTIVE_BEGIN=0          and HPOS-H_ACTIVE_BEGIN>=0           and HPOS-H_ACTIVE_BEGIN< 10)
---              or (VPOS-V_ACTIVE_BEGIN=0          and HPOS-H_ACTIVE_BEGIN>=H_PIXELS-10 and HPOS-H_ACTIVE_BEGIN<H_PIXELS)
---              or (VPOS-V_ACTIVE_BEGIN=V_PIXELS-1 and HPOS-H_ACTIVE_BEGIN>=0           and HPOS-H_ACTIVE_BEGIN< 10)
---              or (VPOS-V_ACTIVE_BEGIN=V_PIXELS-1 and HPOS-H_ACTIVE_BEGIN>=H_PIXELS-10 and HPOS-H_ACTIVE_BEGIN<H_PIXELS) then
---                  R <= (others => '0'); -- debug: green pixel if corner or center line
---                  G <= (others => '1');
---                  B <= (others => '0');
--- --               elsif FIFO_FULL = '1' then
--- --                   R <= (others => '1'); -- debug: yellow pixel if FIFO is full
--- --                   G <= (others => '1');
--- --                   B <= (others => '0');
-                -- else
-
-                    -- color encoding: map 1 bit R+G+B+EX+EZ to 4 bit RGB
-                    -- input data is 5 bits:
-                    --
-                    -- +--+--+--+--+--+
-                    -- |EZ|EX|G |R |B |
-                    -- +--+--+--+--+--+
-                    case DATA(4 downto 0) is
-                        --   "00xxx" => background, no highlight
-                        when "00000" =>  rr := "0000"; gg := "0000"; bb := "0000"; --  0 schwarz
-                        when "00001" =>  rr := "0000"; gg := "0000"; bb := "0111"; --  1 blau
-                        when "00010" =>  rr := "0111"; gg := "0000"; bb := "0000"; --  2 rot
-                        when "00011" =>  rr := "0111"; gg := "0000"; bb := "0111"; --  3 purpur
-                        when "00100" =>  rr := "0000"; gg := "0111"; bb := "0000"; --  4 gr�n
-                        when "00101" =>  rr := "0000"; gg := "0111"; bb := "0111"; --  5 t�rkis
-                        when "00110" =>  rr := "0111"; gg := "0111"; bb := "0000"; --  6 gelb
-                        when "00111" =>  rr := "0111"; gg := "0111"; bb := "0111"; --  7 wei�
-                        --   "11xxx" => foreground, no highlight
-                        when "11000" =>  rr := "0000"; gg := "0000"; bb := "0000"; --  0 schwarz
-                        when "11001" =>  rr := "0000"; gg := "0000"; bb := "1111"; --  1 blau
-                        when "11010" =>  rr := "1111"; gg := "0000"; bb := "0000"; --  2 rot
-                        when "11011" =>  rr := "1111"; gg := "0000"; bb := "1111"; --  3 purpur
-                        when "11100" =>  rr := "0000"; gg := "1111"; bb := "0000"; --  4 gr�n
-                        when "11101" =>  rr := "0000"; gg := "1111"; bb := "1111"; --  5 t�rkis
-                        when "11110" =>  rr := "1111"; gg := "1111"; bb := "0000"; --  6 gelb
-                        when "11111" =>  rr := "1111"; gg := "1111"; bb := "1111"; --  7 wei�
-                        --   "10xxx" => foreground, highlight
-                        when "10000" =>  rr := "0000"; gg := "0000"; bb := "0000"; --  8 schwarz   #000000
-                        when "10001" =>  rr := "0110"; gg := "0000"; bb := "1111"; --  9 violett   #5901FF
-                        when "10010" =>  rr := "1111"; gg := "0110"; bb := "0000"; --  A orange    #FF5901
-                        when "10011" =>  rr := "1111"; gg := "0000"; bb := "1011"; --  B purpurrot #FF01B3
-                        when "10100" =>  rr := "0000"; gg := "1111"; bb := "0110"; --  C gr�nblau  #01FF5A
-                        when "10101" =>  rr := "0000"; gg := "1000"; bb := "1111"; --  D blaugr�n  #0186FF
-                        when "10110" =>  rr := "1000"; gg := "1111"; bb := "0000"; --  E gelbgr�n  #86FF01
-                        when "10111" =>  rr := "1111"; gg := "1111"; bb := "1111"; --  F wei�      #FFFFFF
-                        --   "01xxx" => undefined
-                        when others  =>  rr := "0000"; gg := "0000"; bb := "0000"; --  0 schwarz
-                    end case;
-
-                    -- if COLORTEST = '1' then
-                    --  if VPOS > V_ACTIVE_BEGIN and VPOS < V_ACTIVE_BEGIN + 256 then
-                    --      rr := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
-                    --      gg := "0000";
-                    --      bb := "0000";
-                    --  elsif VPOS > V_ACTIVE_BEGIN + 256 and VPOS < V_ACTIVE_BEGIN + 512 then
-                    --      rr := "0000";
-                    --      gg := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
-                    --      bb := "0000";
-                    --  elsif VPOS > V_ACTIVE_BEGIN + 512 and VPOS < V_ACTIVE_BEGIN + 768 then
-                    --      rr := "0000";
-                    --      gg := "0000";
-                    --      bb := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
-                    --  else
-                    --      rr := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
-                    --      gg := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
-                    --      bb := GET_TEST_COLOR(HPOS - H_ACTIVE_BEGIN);
-                    --  end if;
-                    -- end if;
-
-                    -- scan line effect: darken every 4th line to 3/4 brightness level
-                    if SCANLINES = '0' and LINE_MULTIPLICATOR = 3 then
-                        R <= REDUCE_BRIGHTNESS(rr, 3, 4); 
-                        G <= REDUCE_BRIGHTNESS(gg, 3, 4); 
-                        B <= REDUCE_BRIGHTNESS(bb, 3, 4); 
-                    else
-                        R <= rr;
-                        G <= gg;
-                        B <= bb;
-                    end if;
-                -- end if;
-
-                -- do sub pixel counting:
-                --   divide pixel clock by 4 (change pixel only every 4 clock cycles)
-                --   shift data word containing 15 bits (3 pixels) every 4 clocks
-                if not(SUBPIXEL_COUNTER = 3) then
-                    SUBPIXEL_COUNTER <= SUBPIXEL_COUNTER + 1;
-                else
-                    -- reset counter
-                    SUBPIXEL_COUNTER <= (others => '0');
-
-                    -- switch to next pixel:
-                    -- shift DATA right by one 5-bit-nibble every 4 VGA pixels
-                    -- -> next pixel will be placed in DATA(4 downto 0),
-                    if not(NIBBLE_COUNTER = 2) then
-                        DATA(9 downto 0) <= DATA(14 downto 5);
-                        NIBBLE_COUNTER <= NIBBLE_COUNTER + 1;
-                    else
-                        -- all pixels in current dataword have been processed
-                        -- -> get next data word from FIFO
-                        DATA <= VGA_DATA;
-                        NIBBLE_COUNTER <= (others => '0');
-
-                        -- trigger new from FIFO request
-                        FIFO_RD <= '1';
-                    end if;
-                end if;
-            else
+            IF HPOS >= H_ACTIVE_BEGIN AND HPOS < H_ACTIVE_END
+                AND VPOS >= V_ACTIVE_BEGIN AND VPOS < V_ACTIVE_END THEN
+                IF PIXEL_MULTIPLIER = 0 THEN
+                    PIXEL_MULTIPLIER <= 1;
+                ELSIF PIXEL_MULTIPLIER = 1 THEN
+                    FIFO_RD          <= '1';
+                    PIXEL_MULTIPLIER <= 2;
+                ELSIF PIXEL_MULTIPLIER = 2 THEN
+                    PIXEL_MULTIPLIER <= 3;
+                ELSIF PIXEL_MULTIPLIER = 3 THEN
+                    PIXEL            <= DATA_IN;
+                    PIXEL_MULTIPLIER <= 0;
+                END IF;
+            ELSE
                 -- blanking during front porch, sync pulse and back porch
-                R <= (others => '0');
-                G <= (others => '0');
-                B <= (others => '0');
-            end if;
+                PIXEL <= (OTHERS => '0');
+            END IF;
+
+            IF HPOS = H_ACTIVE_END THEN
+                IF LINE_MULTIPLIER = 0 THEN
+                    LINE_MULTIPLIER <= 1;
+                ELSIF LINE_MULTIPLIER = 1 THEN
+                    LINE_MULTIPLIER <= 2;
+                ELSIF LINE_MULTIPLIER = 2 THEN
+                    LINE_MULTIPLIER <= 3;
+                ELSIF LINE_MULTIPLIER = 3 THEN
+                    ADDR            <= ADDR + 107;
+                    LINE_MULTIPLIER <= 0;
+                END IF;
+            END IF;
 
             -- update horizontal and vertical position counters
-            if HPOS < H_TOTAL-1 then
+            IF HPOS < H_TOTAL - 1 THEN
                 HPOS <= HPOS + 1;
-            else
+            ELSE
                 -- end of line
                 HPOS <= 0;
 
-                -- update LINE_MULTIPLICATOR inside active area only 
-                if VPOS >= V_ACTIVE_BEGIN and VPOS < V_ACTIVE_END then
-                    if not(LINE_MULTIPLICATOR = 3) then
-                        LINE_MULTIPLICATOR <= LINE_MULTIPLICATOR + 1;
-                    else
-                        -- switch address to next line after 4th repetition
-                        LINE_MULTIPLICATOR <= (others => '0');
-                        ADDR <= ADDR + 107; -- 320 pixels / 3 pixels per data word
-                    end if;
-                end if;
-
-                -- trigger next frame from KCVIDEO_INTERFACE when we're
-                -- past the last displayed line, now we have vertical 
-                -- front porch + sync pulse + back porch = 1+3+38 = 42
-                -- lines = 70896 clocks before the next frame starts
-                -- (which is enough for shuffling 17724 datawords with the
-                -- SRAM_INTERFACE (4 clocks per dataword) with 3 pixels 
-                -- each = almost one full frame)
-                if VPOS = V_ACTIVE_END then
-                    FRAMESYNC <= '1';
-                end if;
-
                 -- increment line counter
-                if VPOS < V_TOTAL-1 then
+                IF VPOS < V_TOTAL - 1 THEN
                     VPOS <= VPOS + 1;
-                else
+                ELSE
                     -- end of frame
-                    VPOS <= 0;
-                    ADDR <= (others => '0');
-                    LINE_MULTIPLICATOR <= (others => '0');
-                end if;
-            end if;
-        end if;
-    end process;
-end Behavioral;
+                    VPOS            <= 0;
+                    LINE_MULTIPLIER <= 0;
+                    ADDR            <= (OTHERS => '0');
+                END IF;
+            END IF;
+        END IF;
+    END PROCESS;
+END Behavioral;
