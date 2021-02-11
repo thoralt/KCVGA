@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-#define FPGA_bitstream_len 54774
-const unsigned char FPGA_bitstream[FPGA_bitstream_len];
+//#define FPGA_bitstream_len 54774
+//const unsigned char FPGA_bitstream[FPGA_bitstream_len];
 
 #ifdef __cplusplus
 }

@@ -1,17 +1,19 @@
 /*******************************************************************************
-  EVIC PLIB Implementation
+  TMR Peripheral Library Interface Source File
 
-  Company:
+  Company
     Microchip Technology Inc.
 
-  File Name:
-    plib_evic.c
+  File Name
+    plib_tmr2.c
 
-  Summary:
-    EVIC PLIB Source File
+  Summary
+    TMR2 peripheral library source file.
 
-  Description:
-    None
+  Description
+    This file implements the interface to the TMR peripheral library.  This
+    library provides access to and control of the associated peripheral
+    instance.
 
 *******************************************************************************/
 
@@ -40,67 +42,106 @@
 *******************************************************************************/
 // DOM-IGNORE-END
 
+
+// *****************************************************************************
+// *****************************************************************************
+// Section: Included Files
+// *****************************************************************************
+// *****************************************************************************
+
 #include "device.h"
-#include "plib_evic.h"
+#include "plib_tmr2.h"
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: IRQ Implementation
-// *****************************************************************************
-// *****************************************************************************
 
-void EVIC_Initialize( void )
+static TMR_TIMER_OBJECT tmr2Obj;
+
+
+void TMR2_Initialize(void)
 {
-    INTCONSET = _INTCON_MVEC_MASK;
+    /* Disable Timer */
+    T2CONCLR = _T2CON_ON_MASK;
 
-    /* Set up priority / subpriority of enabled interrupts */
-    IPC7SET = 0x40000 | 0x0;  /* USB_1:  Priority 1 / Subpriority 0 */
-    IPC7SET = 0x4000000 | 0x0;  /* SPI_1:  Priority 1 / Subpriority 0 */
+    /*
+    SIDL = 0
+    TCKPS =0
+    T32   = 0
+    TCS = 0
+    */
+    T2CONSET = 0x0;
+
+    /* Clear counter */
+    TMR2 = 0x0;
+
+    /*Set period */
+    PR2 = 48000U;
+
+    /* Enable TMR Interrupt */
+    IEC0SET = _IEC0_T2IE_MASK;
+
 }
 
-void EVIC_SourceEnable( INT_SOURCE source )
-{
-    volatile uint32_t *IECx = (volatile uint32_t *) (&IEC0 + ((0x10 * (source / 32)) / 4));
-    volatile uint32_t *IECxSET = (volatile uint32_t *)(IECx + 2);
 
-    *IECxSET = 1 << (source & 0x1f);
+void TMR2_Start(void)
+{
+    T2CONSET = _T2CON_ON_MASK;
 }
 
-void EVIC_SourceDisable( INT_SOURCE source )
-{
-    volatile uint32_t *IECx = (volatile uint32_t *) (&IEC0 + ((0x10 * (source / 32)) / 4));
-    volatile uint32_t *IECxCLR = (volatile uint32_t *)(IECx + 1);
 
-    *IECxCLR = 1 << (source & 0x1f);
+void TMR2_Stop (void)
+{
+    T2CONCLR = _T2CON_ON_MASK;
 }
 
-bool EVIC_SourceIsEnabled( INT_SOURCE source )
+void TMR2_PeriodSet(uint16_t period)
 {
-    volatile uint32_t *IECx = (volatile uint32_t *) (&IEC0 + ((0x10 * (source / 32)) / 4));
-
-    return (bool)((*IECx >> (source & 0x1f)) & 0x01);
+    PR2  = period;
 }
 
-bool EVIC_SourceStatusGet( INT_SOURCE source )
+uint16_t TMR2_PeriodGet(void)
 {
-    volatile uint32_t *IFSx = (volatile uint32_t *)(&IFS0 + ((0x10 * (source / 32)) / 4));
-
-    return (bool)((*IFSx >> (source & 0x1f)) & 0x1);
+    return (uint16_t)PR2;
 }
 
-void EVIC_SourceStatusSet( INT_SOURCE source )
+uint16_t TMR2_CounterGet(void)
 {
-    volatile uint32_t *IFSx = (volatile uint32_t *) (&IFS0 + ((0x10 * (source / 32)) / 4));
-    volatile uint32_t *IFSxSET = (volatile uint32_t *)(IFSx + 2);
-
-    *IFSxSET = 1 << (source & 0x1f);
+    return (uint16_t)(TMR2);
 }
 
-void EVIC_SourceStatusClear( INT_SOURCE source )
-{
-    volatile uint32_t *IFSx = (volatile uint32_t *) (&IFS0 + ((0x10 * (source / 32)) / 4));
-    volatile uint32_t *IFSxCLR = (volatile uint32_t *)(IFSx + 1);
 
-    *IFSxCLR = 1 << (source & 0x1f);
+uint32_t TMR2_FrequencyGet(void)
+{
+    return (48000000);
 }
 
+
+void TIMER_2_InterruptHandler (void)
+{
+    uint32_t status;
+    status = IFS0bits.T2IF;
+    IFS0CLR = _IFS0_T2IF_MASK;
+
+    if((tmr2Obj.callback_fn != NULL))
+    {
+        tmr2Obj.callback_fn(status, tmr2Obj.context);
+    }
+}
+
+
+void TMR2_InterruptEnable(void)
+{
+    IEC0SET = _IEC0_T2IE_MASK;
+}
+
+
+void TMR2_InterruptDisable(void)
+{
+    IEC0CLR = _IEC0_T2IE_MASK;
+}
+
+
+void TMR2_CallbackRegister( TMR_CALLBACK callback_fn, uintptr_t context )
+{
+    /* Save callback_fn and context in local memory */
+    tmr2Obj.callback_fn = callback_fn;
+    tmr2Obj.context = context;
+}

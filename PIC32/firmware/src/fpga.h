@@ -49,7 +49,52 @@ extern "C" {
 // Section: Type Definitions
 // *****************************************************************************
 // *****************************************************************************
+#define CMD_READ_DEBUG0   0b10000000
+#define CMD_READ_DEBUG1   0b10000001
+#define CMD_READ_DEBUG2   0b10000010
+#define CMD_READ_DEBUG3   0b10000011
+#define CMD_WRITE_ADDRESS 0b00000000
+#define CMD_WRITE_DATA    0b00000001
+#define CMD_READ_DATA     0b00000010
 
+#ifndef USE_PMP
+//    RA3 -> A0
+//    RA4 -> A1
+//    RB13-> nRD
+//    RB3 -> nWR
+//    RB0 -> D0
+//    RB1 -> D1
+//    RB2 -> D2
+//    RB9 -> D3
+//    RB8 -> D4
+//    RB7 -> D5
+//    RA1 -> D6
+//    RA0 -> D7
+
+#define DATA_OUT() TRISBCLR = 0b0000001110000111; TRISACLR = 0b0000000000000011
+#define DATA_IN()  TRISBSET = 0b0000001110000111; TRISASET = 0b0000000000000011
+#define A(x) LATAbits.LATA3 = (x)&0x01; LATAbits.LATA4 = (x>>1)&0x01
+#define nRD(x) LATBbits.LATB13 = x
+#define nWR(x) LATBbits.LATB3 = x
+
+#define DATA_READ()  ((PORTBbits.RB0<<0) | \
+                      (PORTBbits.RB1<<1) | \
+                      (PORTBbits.RB2<<2) | \
+                      (PORTBbits.RB9<<3) | \
+                      (PORTBbits.RB8<<4) | \
+                      (PORTBbits.RB7<<5) | \
+                      (PORTAbits.RA1<<6) | \
+                      (PORTAbits.RA0<<7))
+#define DATA_WRITE(x) LATBbits.LATB0 = ((x)>>0)&0x01; \
+                      LATBbits.LATB1 = ((x)>>1)&0x01; \
+                      LATBbits.LATB2 = ((x)>>2)&0x01; \
+                      LATBbits.LATB9 = ((x)>>3)&0x01; \
+                      LATBbits.LATB8 = ((x)>>4)&0x01; \
+                      LATBbits.LATB7 = ((x)>>5)&0x01; \
+                      LATAbits.LATA1 = ((x)>>6)&0x01; \
+                      LATAbits.LATA0 = ((x)>>7)&0x01;
+#endif
+    
 // *****************************************************************************
 /* Application states
 
@@ -125,6 +170,9 @@ bool FPGA_ConfigurationIsBusy();
 FPGA_ERROR FPGA_ConfigurationBegin();
 void FPGA_ConfigurationEnd();
 void FPGA_Reset();
+void FPGA_WriteCommand(uint8_t cmd);
+void FPGA_WriteRegister(uint8_t reg, uint8_t value);
+uint8_t FPGA_ReadRegister(uint32_t reg);
 
 #endif /* _FPGA_H */
 
