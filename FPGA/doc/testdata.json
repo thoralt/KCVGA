@@ -1,0 +1,21 @@
+{
+    "config": {
+        "hscale": 2
+    },
+    "signal": [
+        {"name": "clk", "wave":        "P......."},
+        {"name": "mem", "wave":        "01......"},
+        {"name": "rw", "wave":         "01......"},
+        {"name": "SRAM nWE", "wave":   "1......."},
+        {"name": "SRAM nOE", "wave":   "1...0...", "data": ["address 1", "address 2"]},
+        {"name": "SRAM addr", "wave":  "=..=....", "data": ["address 1", "address 2"]},
+        {"name": "SRAM data", "wave":  "x....=..", "data": ["valid"]},
+
+
+/*        {"name": "htrans", "wave": "==....|=.", "data": ["IDLE", "ACTIVE", "IDLE"]},
+        {"name": "haddr", "wave":  "x=345=|xx", "data": ["A", "B", "C", "D", "E"]},
+        {"name": "hwrite", "wave": "01010.|.."},
+        {"name": "hwdata", "wave": "xx=x4x|xx", "data": ["A", "C"]},
+        {"name": "hrdata", "wave": "xxx3x5|=x", "data": ["B", "D", "E"]}*/
+    ]
+}
