@@ -86,3 +86,4 @@ FPGA/ipcore_dir/FIFO_PIC32
 /bootloader.X/build/
 /FPGA/build/
 PIC32/firmware/KCVGA.X/.generated_files
+.devcontainer/Xilinx.lic
