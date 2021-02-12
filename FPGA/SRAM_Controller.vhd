@@ -207,7 +207,7 @@ BEGIN
             tri_reg      <= '1';
             we_reg       <= '1';
             oe_reg       <= '1';
-            ELSIF (clk'event AND clk = '1') THEN
+        ELSIF (clk'event AND clk = '1') THEN
             state_reg    <= state_next;
             addr_reg     <= addr_next;
             data_f2s_reg <= data_f2s_next;
@@ -287,5 +287,5 @@ BEGIN
     ub_a_n <= '0';
     lb_a_n <= '0';
     dio_a  <= data_f2s_reg WHEN tri_reg = '0' ELSE
-    (OTHERS => 'Z');
+        (OTHERS => 'Z');
 END arch;
