@@ -1,0 +1,11 @@
+{
+  "build": { "dockerfile": "Dockerfile" },
+  "extensions": [
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "ms-python.python",
+    "vinrobot.vhdl-formatter",
+    "puorc.awesome-vhdl"
+  ],
+  "runArgs": ["--mac-address=00:d8:61:2f:d8:c0"]
+}
