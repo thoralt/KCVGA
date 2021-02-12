@@ -3,8 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/fpga_bitstream.h</file>
+            <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/fpga_bitstream.c</file>
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/fpga.h</file>
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/app.c</file>
+            <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/app.h</file>
             <file>file:/Users/thoralt/Documents/source/KCVGA/PIC32/firmware/src/fpga.c</file>
         </group>
     </open-files>
