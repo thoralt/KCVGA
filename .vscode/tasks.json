@@ -12,7 +12,7 @@
           "owner": "xst",
           "fileLocation": ["relative", "/"],
           "pattern": {
-            "regexp": "^(ERROR|WARNING):HDLCompiler:(\\d+) - \"(.*)\" Line (\\d+): (.*)$",
+            "regexp": "^.*(ERROR|WARNING):.*:(\\d+) - \"(.*)\" Line (\\d+)[:|.] (.*)$",
             "file": 3,
             "line": 4,
             "message": 5,
