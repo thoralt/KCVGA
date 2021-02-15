@@ -70,8 +70,8 @@ endif
 TEST_NAMES = $(foreach file,$(VTEST) $(VHDTEST),$(basename $(file)))
 TEST_EXES = $(foreach test,$(TEST_NAMES),build/isim_$(test)$(EXE))
 
-RUN = @echo "\n\n\033[1;33m======== $(1) ========\033[m\n\n"; \
-	cd build && $(XILINX)/bin/$(XILINX_PLATFORM)/$(1)
+RUN = @echo "\n\n\033[1;37m======== $(1) ========\033[m\n\n"; \
+		cd build && $(XILINX)/bin/$(XILINX_PLATFORM)/$(1)
 
 # isim executables don't work without this
 export XILINX
