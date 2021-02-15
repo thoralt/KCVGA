@@ -125,7 +125,7 @@ BEGIN
             ELSIF reg_nRD = '0' THEN
                 IF reg_A = "00" THEN
                     -- read register 0: Flags
-                    D_buffer <= "10101010";
+                    D_buffer <= addr(16) & "0000000";
                     --FIFO_OVERFLOW
                     --& suppress_no_load_pins_warning
                     --& FLAGS(5 DOWNTO 0);
