@@ -56,9 +56,12 @@ def configureFPGA(win, filename, ser):
     h, w = win.getmaxyx()
 
     # check the input file size
-    filesize = remainingSize = os.path.getsize(filename)
-    if filesize > 1024*1024:
-        print("Error: The input file is too large (file size up to 1 MB supported)")
+    try:
+        filesize = remainingSize = os.path.getsize(filename)
+        if filesize > 1024*1024:
+            print("Error: The input file is too large (file size up to 1 MB supported)")
+            return False
+    except OSError:
         return False
 
     #print('Input file size: %i bytes' % remainingSize)
@@ -171,14 +174,17 @@ def main(win, args):
                         pass
                     connected = False
 
-            if (filename is not None
-                and os.path.getmtime(filename) > changedate
-                and os.path.getsize(filename) > 0
-                    and connected == True):
+            try:
+                if (filename is not None
+                    and os.path.getmtime(filename) > changedate
+                    and os.path.getsize(filename) > 0
+                        and connected == True):
 
-                changedate = os.path.getmtime(filename)
-                if not configureFPGA(win, filename, ser):
-                    sys.exit()
+                    changedate = os.path.getmtime(filename)
+                    if not configureFPGA(win, filename, ser):
+                        sys.exit()
+            except OSError:
+                pass
 
             # handle keyboard input
             key = win.getch()
