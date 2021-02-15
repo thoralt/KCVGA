@@ -43,7 +43,10 @@ void APP_LoadFPGABitstream()
     }
     
     // convert to integer
-    remainingBytes = ((int32_t*)ucBuf)[0];
+    remainingBytes = ((uint32_t)ucBuf[0])
+                   | (((uint32_t)ucBuf[1]) << 8)
+                   | (((uint32_t)ucBuf[2]) << 16)
+                   | (((uint32_t)ucBuf[3]) << 24);
     printf("OK (expecting %i bytes)\n", remainingBytes);
     
     // initialize the FPGA configuration process
@@ -191,41 +194,25 @@ void APP_RepeatWrite()
     FPGA_WriteCommand(CMD_WRITE_DATA);
 }
 
-
-uint32_t APP_ReadRegister32()
+void APP_ReadDebugRegister()
 {
+    uint32_t u;
     uint8_t buffer[4];
     
     FPGA_WriteCommand(CMD_READ_DEBUG0);
-    while(PMMODE & 0x8000);
-    buffer[0] = PMDIN; // dummy read
-    while(PMMODE & 0x8000);
-    buffer[0] = PMDIN;
-    
+    buffer[0] = FPGA_ReadRegister(1);
     FPGA_WriteCommand(CMD_READ_DEBUG1);
-    while(PMMODE & 0x8000);
-    buffer[1] = PMDIN; // dummy read
-    while(PMMODE & 0x8000);
-    buffer[1] = PMDIN;
-    
+    buffer[1] = FPGA_ReadRegister(1);
     FPGA_WriteCommand(CMD_READ_DEBUG2);
-    while(PMMODE & 0x8000);
-    buffer[2] = PMDIN; // dummy read
-    while(PMMODE & 0x8000);
-    buffer[2] = PMDIN;
-    
+    buffer[2] = FPGA_ReadRegister(1);
     FPGA_WriteCommand(CMD_READ_DEBUG3);
-    while(PMMODE & 0x8000);
-    buffer[3] = PMDIN; // dummy read
-    while(PMMODE & 0x8000);
-    buffer[3] = PMDIN;
+    buffer[3] = FPGA_ReadRegister(1);
 
-    return *(uint32_t*)buffer;
-}
+    u = ((uint32_t)buffer[0])
+      | (((uint32_t)buffer[1]) << 8)
+      | (((uint32_t)buffer[2]) << 16)
+      | (((uint32_t)buffer[3]) << 24);
 
-void APP_ReadDebugRegister()
-{
-    uint32_t u =  APP_ReadRegister32();
     printf("Debug register: 0x%08X (%u)\n", u, u);
 }
 
@@ -241,29 +228,6 @@ void APP_ReadFlags()
     printf("  KC_FIFO_EMPTY:       %i\n", (flags >> 2) & 0x01);
     printf("  VGA_FIFO_FULL:       %i\n", (flags >> 1) & 0x01);
     printf("  VGA_FIFO_EMPTY:      %i\n", (flags >> 0) & 0x01);
-}
-void FPGA_WriteAddress(uint16_t addr)
-{
-    FPGA_WriteRegister(2, addr & 0xFF);
-    FPGA_WriteRegister(3, (addr >> 8) & 0xFF);
-    FPGA_WriteCommand(CMD_WRITE_ADDRESS);
-}
-
-void APP_WriteWord(uint16_t addr, uint16_t data)
-{
-    FPGA_WriteAddress(addr);
-    FPGA_WriteRegister(2, data & 0xFF);
-    FPGA_WriteRegister(3, (data >> 8) & 0xFF);
-    FPGA_WriteCommand(CMD_WRITE_DATA);
-}
-
-uint16_t FPGA_ReadWord(uint16_t addr)
-{
-    FPGA_WriteAddress(addr);
-    FPGA_WriteCommand(CMD_READ_DATA);
-    uint16_t u1 = FPGA_ReadRegister(2);
-    uint16_t u2 = FPGA_ReadRegister(3);
-    return u1 | (u2 << 8); 
 }
 
 void APP_MemoryDump(uint16_t addr)
@@ -289,6 +253,44 @@ void APP_Benchmark()
         if(CDC_SendFullBuffer()) i -= bufSize;
     }
 }
+
+void APP_RAMTest()
+{
+#define NUM_BYTES 65536
+    TickType_t t = xTaskGetTickCount();
+
+    uint32_t seed_value = xTaskGetTickCount();
+    unsigned int i = 0, mismatches = 0;
+    uint16_t u, expected;
+        
+    srand(seed_value);
+    for(i=0; i<NUM_BYTES; i++)
+    {
+//        if((i & 0x0FFF) == 0x0000)
+//        {
+//            printf("Writing 0x%04X\n", i);
+//        }
+        FPGA_WriteWord(i, rand());
+    }
+    
+    srand(seed_value);
+    for(i=0; i<NUM_BYTES; i++)
+    {
+        u = FPGA_ReadWord(i);
+        expected = rand();
+        if(u != expected)
+        {
+            if(mismatches < 100) {
+                printf("Mismatch at 0x%04X: expected 0x%04X, read 0x%04X\n", 
+                    i, expected, u);
+            }
+            mismatches++;
+        }
+    }
+    printf("Done. %u mismatches, %u ms\n", 
+            mismatches, xTaskGetTickCount() - t);
+}
+
 /******************************************************************************
  * Print informational text
  */
@@ -311,11 +313,11 @@ static void APP_Task(void)
     {
         case '1':
             printf("Writing 0xAAAA to address 0x0000\n");
-            APP_WriteWord(0, 0xAAAA);
+            FPGA_WriteWord(0, 0xAAAA);
             break;
         case '2':
             printf("Writing 0x5555 to address 0x0001\n");
-            APP_WriteWord(1, 0x5555);
+            FPGA_WriteWord(1, 0x5555);
             break;
         case '3':
             printf("Reading address 0x0000: 0x%04X\n",
@@ -324,6 +326,14 @@ static void APP_Task(void)
         case '4':
             printf("Reading address 0x0001: 0x%04X\n",
                     FPGA_ReadWord(1));
+            break;
+        case '5':
+            printf("Switching to RAM bank 0\n");
+            FPGA_WriteCommand(CMD_BANK_0);
+            break;
+       case '6':
+            printf("Switching to RAM bank 1\n");
+            FPGA_WriteCommand(CMD_BANK_1);
             break;
 
         case 'b':
@@ -349,6 +359,10 @@ static void APP_Task(void)
 
         case 'm':
             APP_MemoryDump(0);
+            break;
+            
+        case 'r':
+            APP_RAMTest();
             break;
             
         case 'R':
