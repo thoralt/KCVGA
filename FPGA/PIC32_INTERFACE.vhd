@@ -34,12 +34,7 @@ ENTITY PIC32_INTERFACE IS
 END PIC32_INTERFACE;
 
 ARCHITECTURE Behavioral OF PIC32_INTERFACE IS
-
-    SIGNAL D_buffer         : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL data             : STD_LOGIC_VECTOR(15 DOWNTO 0);
-    SIGNAL addr             : STD_LOGIC_VECTOR(16 DOWNTO 0);
-    SIGNAL command_register : STD_LOGIC_VECTOR (7 DOWNTO 0);
-
+    -- command constants
     CONSTANT cmd_write_address : STD_LOGIC_VECTOR(7 DOWNTO 0) := "00000000";
     CONSTANT cmd_write_data    : STD_LOGIC_VECTOR(7 DOWNTO 0) := "00000001";
     CONSTANT cmd_read_data     : STD_LOGIC_VECTOR(7 DOWNTO 0) := "00000010";
@@ -50,106 +45,125 @@ ARCHITECTURE Behavioral OF PIC32_INTERFACE IS
     CONSTANT cmd_read_debug2   : STD_LOGIC_VECTOR(7 DOWNTO 0) := "10000010";
     CONSTANT cmd_read_debug3   : STD_LOGIC_VECTOR(7 DOWNTO 0) := "10000011";
 
-    SIGNAL mem, rw  : STD_LOGIC;
-    SIGNAL data_s2f : STD_LOGIC_VECTOR(15 DOWNTO 0);
-    --    SIGNAL DEBUG          : STD_LOGIC_VECTOR(31 DOWNTO 0);
-
-    SIGNAL reg_nRD, reg_nWR : STD_LOGIC;
-    SIGNAL reg_A            : STD_LOGIC_VECTOR(1 DOWNTO 0);
-    SIGNAL reg_D            : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL A_sync                     : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    SIGNAL D_sync                     : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL D_buf, D_buf_next          : STD_LOGIC_VECTOR(7 DOWNTO 0); -- internal value for D
+    SIGNAL cmd, cmd_next              : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL data, data_next            : STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SIGNAL data_s2f                   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SIGNAL addr, addr_next            : STD_LOGIC_VECTOR(16 DOWNTO 0);
+    SIGNAL nRD_sync, nWR_sync         : STD_LOGIC;
+    SIGNAL mem, mem_next, rw, rw_next : STD_LOGIC;
 BEGIN
 
     -- only drive data output when PIC32 is trying to read
-    D <= D_buffer WHEN reg_nRD = '0' AND reg_nWR = '1' ELSE
+    D <= D_buf WHEN nRD_sync = '0' AND nWR_sync = '1' ELSE
         (OTHERS => 'Z');
 
+    -- set all registers and I/O synchronously
     PROCESS (RESET, CLK)
     BEGIN
         IF RESET = '1' THEN
-            D        <= (OTHERS => 'Z');
-            reg_nRD  <= '0';
-            reg_nWR  <= '0';
+            nRD_sync <= '0';
+            nWR_sync <= '0';
             addr(16) <= '0';
 
         ELSIF rising_edge(CLK) THEN
-            -- capture all inputs from PIC32 on rising edge of CLK
-            reg_nRD <= nRD;
-            reg_nWR <= nWR;
-            reg_A   <= A;
-            reg_D   <= D;
+            -- sync all inputs from PIC32 on rising edge of CLK
+            nRD_sync <= nRD;
+            nWR_sync <= nWR;
+            A_sync   <= A;
+            D_sync   <= D;
 
-            -- reset SRAM controller request each cycle
-            mem <= '0';
+            -- update all registers and I/O with their next values
+            D_buf <= D_buf_next;
+            data  <= data_next;
+            addr  <= addr_next;
+            cmd   <= cmd_next;
+            mem   <= mem_next;
+            rw    <= rw_next;
+        END IF;
+    END PROCESS;
 
-            IF reg_nWR = '0' THEN
-                IF reg_A = "00" THEN
-                    -- write register 0: currently unused
+    -- next state logic: PIC32 read
+    PROCESS (nRD_sync, A_sync, cmd, addr, data_s2f, D_buf)
+    BEGIN
+        -- default value for next state: keep previous value
+        D_buf_next <= D_buf;
 
-                ELSIF reg_A = "01" THEN
-                    -- write register 1 (CMD): command
+        IF nRD_sync = '0' THEN
+            CASE A_sync IS
+                WHEN "00" => -- read register 0: flags
+                    D_buf_next <= addr(16) & "0000000";
+                WHEN "01" => -- read register 1: debug register
+                    CASE cmd IS
+                        WHEN cmd_read_debug3 =>
+                            D_buf_next <= "11011110"; -- DE
+                        WHEN cmd_read_debug2 =>
+                            D_buf_next <= "10101101"; -- AD
+                        WHEN cmd_read_debug1 =>
+                            D_buf_next <= "10111110"; -- BE
+                        WHEN cmd_read_debug0 =>
+                            D_buf_next <= "11101111"; -- EF
+                        WHEN OTHERS =>
+                            D_buf_next <= D_buf; -- no change
+                    END CASE;
+                WHEN "10" => -- read register 2: L byte of SRAM data
+                    D_buf_next <= data_s2f(7 DOWNTO 0);
+                WHEN "11" => -- read register 3: H byte of SRAM data
+                    D_buf_next <= data_s2f(15 DOWNTO 8);
+                WHEN OTHERS =>
+                    D_buf_next <= D_buf; -- no change
+            END CASE;
+        END IF;
+    END PROCESS;
 
-                    -- evaluate input register D (=command)
-                    IF reg_D = cmd_write_address THEN
-                        -- set current address to previously received DATA_L and DATA_H
-                        addr(15 DOWNTO 0) <= data;
-                        --                       debug(31 DOWNTO 16) <= data;
-                    ELSIF reg_D = cmd_write_data THEN
-                        -- write address has been latched into addr previously
-                        rw  <= '0'; -- rw = 0: write
-                        mem <= '1'; -- start SRAM controller cycle
-                        --                        debug(15 DOWNTO 0) <= data;
-                    ELSIF reg_D = cmd_read_data THEN
-                        -- read address has been latched into addr previously
-                        rw  <= '1'; -- rw = 1: read
-                        mem <= '1'; -- start SRAM controller cycle
-                    ELSIF reg_D = cmd_bank_0 THEN
-                        -- select memory bank 0
-                        addr(16) <= '0';
-                    ELSIF reg_D = cmd_bank_1 THEN
-                        -- select memory bank 1
-                        addr(16) <= '1';
-                    ELSE
-                        -- every other command: save to command_register for later
-                        command_register <= reg_D;
-                    END IF;
+    -- next state logic: PIC32 write
+    PROCESS (nWR_sync, A_sync, D_sync, data, rw, mem, addr, cmd)
+    BEGIN
+        -- default values for next state: keep previous values
+        rw_next   <= rw;
+        addr_next <= addr;
+        data_next <= data;
+        cmd_next  <= cmd;
 
-                ELSIF reg_A = "10" THEN
-                    -- write register 2 (DATA_L): L byte of data register
-                    data(7 DOWNTO 0) <= reg_D;
+        -- always reset mem signal to SRAM_Controller 
+        mem_next <= '0';
 
-                ELSIF reg_A = "11" THEN
-                    -- write register 3 (DATA_H): H byte of data register
-                    data(15 DOWNTO 8) <= reg_D;
-                END IF;
-
-            ELSIF reg_nRD = '0' THEN
-                IF reg_A = "00" THEN
-                    -- read register 0: Flags
-                    D_buffer <= addr(16) & "0000000";
-                    --FIFO_OVERFLOW
-                    --& suppress_no_load_pins_warning
-                    --& FLAGS(5 DOWNTO 0);
-                ELSIF reg_A = "01" THEN
-                    -- read register 1: result of last command cmd_read_debug*
-                    IF command_register = cmd_read_debug0 THEN
-                        D_buffer <= "01010101"; --DEBUG(7 DOWNTO 0);
-                    ELSIF command_register = cmd_read_debug1 THEN
-                        D_buffer <= "10101010"; --DEBUG(15 DOWNTO 8);
-                    ELSIF command_register = cmd_read_debug2 THEN
-                        D_buffer <= "00000000"; --DEBUG(23 DOWNTO 16);
-                    ELSIF command_register = cmd_read_debug3 THEN
-                        D_buffer <= "11111111"; --DEBUG(31 DOWNTO 24);
-                    END IF;
-
-                ELSIF reg_A = "10" THEN
-                    -- read register 2: L byte of SRAM data
-                    D_buffer <= data_s2f(7 DOWNTO 0);
-
-                ELSIF reg_A = "11" THEN
-                    -- read register 3: H byte of SRAM data
-                    D_buffer <= data_s2f(15 DOWNTO 8);
-                END IF;
-            END IF;
+        IF nWR_sync = '0' THEN
+            CASE A_sync IS
+                WHEN "00" => -- write register 0: currently unused
+                    -- do nothing
+                WHEN "01" => -- write register 1: command register
+                    CASE D_sync IS
+                        WHEN cmd_write_address =>
+                            -- save value last written to data into address
+                            addr_next(15 DOWNTO 0) <= data;
+                        WHEN cmd_write_data =>
+                            -- address has been latched into addr previously
+                            rw_next  <= '0'; -- rw = 0: write
+                            mem_next <= '1'; -- start SRAM controller cycle
+                        WHEN cmd_read_data =>
+                            -- read address has been latched into addr previously
+                            rw_next  <= '1'; -- rw = 1: read
+                            mem_next <= '1'; -- start SRAM controller cycle
+                        WHEN cmd_bank_0 =>
+                            -- select memory bank 0
+                            addr_next(16) <= '0';
+                        WHEN cmd_bank_1 =>
+                            -- select memory bank 1
+                            addr_next(16) <= '1';
+                        WHEN OTHERS =>
+                            -- every other command gets stored in cmd
+                            cmd_next <= D_sync;
+                    END CASE;
+                WHEN "10" => -- write register 2: L byte of data register
+                    data_next(7 DOWNTO 0) <= D_sync;
+                WHEN "11" => -- write register 3: H byte of data register
+                    data_next(15 DOWNTO 8) <= D_sync;
+                WHEN OTHERS =>
+                    -- do nothing
+            END CASE;
         END IF;
     END PROCESS;
 
