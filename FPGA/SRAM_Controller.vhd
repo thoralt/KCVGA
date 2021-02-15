@@ -180,15 +180,15 @@ ENTITY SRAM_Controller IS
         -- to/from chip
         ad         : OUT STD_LOGIC_VECTOR(16 DOWNTO 0);
         we_n, oe_n : OUT STD_LOGIC;
-        -- SRAM chip a
-        dio_a                  : INOUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-        ce_a_n, ub_a_n, lb_a_n : OUT STD_LOGIC;
-        debug                  : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+        -- SRAM chip
+        dio              : INOUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+        ce_n, ub_n, lb_n : OUT STD_LOGIC;
+        debug            : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
     );
 END SRAM_Controller;
 
 ARCHITECTURE arch OF SRAM_Controller IS
-    TYPE state_type IS (idle, rd1, rd2, rd3, wr1, wr2);
+    TYPE state_type IS (idle, rd1, rd2, wr1, wr2);
     SIGNAL state_reg, state_next       : state_type;
     SIGNAL data_f2s_reg, data_f2s_next : STD_LOGIC_VECTOR(15 DOWNTO 0);
     SIGNAL data_s2f_reg, data_s2f_next : STD_LOGIC_VECTOR(15 DOWNTO 0);
@@ -218,7 +218,7 @@ BEGIN
         END IF;
     END PROCESS;
     -- next-state logic
-    PROCESS (state_reg, mem, rw, dio_a, addr, data_f2s,
+    PROCESS (state_reg, mem, rw, dio, addr, data_f2s,
         data_f2s_reg, data_s2f_reg, addr_reg)
     BEGIN
         addr_next     <= addr_reg;
@@ -248,9 +248,7 @@ BEGIN
             WHEN rd1 =>
                 state_next <= rd2;
             WHEN rd2 =>
-                state_next <= rd3;
-            WHEN rd3 =>
-                data_s2f_next <= dio_a;
+                data_s2f_next <= dio;
                 state_next    <= idle;
         END CASE;
     END PROCESS;
@@ -271,21 +269,19 @@ BEGIN
                 oe_buf <= '0';
             WHEN rd2 =>
                 oe_buf <= '0';
-            WHEN rd3 =>
-                oe_buf <= '0';
         END CASE;
     END PROCESS;
     -- to main system
     data_s2f_r  <= data_s2f_reg;
-    data_s2f_ur <= dio_a;
+    data_s2f_ur <= dio;
     -- to sram
     we_n <= we_reg;
     oe_n <= oe_reg;
     ad   <= addr_reg;
     --i/o for SRAM chip a
-    ce_a_n <= '0';
-    ub_a_n <= '0';
-    lb_a_n <= '0';
-    dio_a  <= data_f2s_reg WHEN tri_reg = '0' ELSE
+    ce_n <= '0';
+    ub_n <= '0';
+    lb_n <= '0';
+    dio  <= data_f2s_reg WHEN tri_reg = '0' ELSE
         (OTHERS => 'Z');
 END arch;
