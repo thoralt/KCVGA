@@ -1,7 +1,5 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
-LIBRARY UNISIM;
-USE UNISIM.vcomponents.ALL;
 
 ENTITY KCVGA IS PORT
 (
@@ -41,7 +39,7 @@ ENTITY KCVGA IS PORT
 END KCVGA;
 
 ARCHITECTURE Behavioral OF KCVGA IS
-    SIGNAL sig_CLK_108MHZ, sig_RESET, sig_CLK, clkfb : STD_LOGIC;
+    SIGNAL sig_CLK_108MHZ, sig_RESET : STD_LOGIC;
     -- SIGNAL sig_FRAMESYNC                      : STD_LOGIC; -- start of frame from VGA module for screensaver
 
     -- SIGNAL sig_PIC32_WR_FIFO_OUT   : STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -125,6 +123,13 @@ BEGIN
     --     OR pin_JUMPER0
     --     OR pin_KC_CLK;
 
+    i_CLK : ENTITY work.CLK PORT MAP
+        (
+        reset      => sig_RESET,
+        clk_input  => pin_CLK,
+        clk_output => sig_CLK_108MHZ
+        );
+
     sig_RESET <= NOT pin_nRESET;
     -- sig_FLAG_REGISTER <= '1' & '1'
     --     & sig_PIC32_WR_FIFO_FULL & sig_PIC32_WR_FIFO_EMPTY
@@ -137,7 +142,8 @@ BEGIN
     -- pin_SRAM_nBHE <= '0';
     -- pin_SRAM_nBLE <= '0';
 
-    i_PIC32_INTERFACE : ENTITY work.PIC32_INTERFACE PORT MAP
+    i_PIC32_INTERFACE : ENTITY work.PIC32_INTERFACE PORT
+        MAP
         (
         CLK   => sig_CLK_108MHZ,
         RESET => sig_RESET,
@@ -279,48 +285,5 @@ BEGIN
     --     KCVIDEO_ADDR_WR    => sig_KC_ADDR_WR,
     --     DEBUG              => sig_DEBUG_REGISTER
     --     );
-
-    -- force sig_CLK_108MHZ to use a BUFG for clock distribution
-    i_CLK_BUFG : BUFG PORT
-    MAP (I => sig_clk, O => sig_CLK_108MHZ);
-
-    i_DCM_SP : DCM_SP
-    GENERIC
-    MAP(
-    CLKDV_DIVIDE => 2.0, --  Divide by: 1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5
-    --     7.0,7.5,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0 or 16.0
-    CLKFX_DIVIDE       => 4,                    --  Can be any interger from 1 to 32
-    CLKFX_MULTIPLY     => 9,                    --  Can be any integer from 1 to 32
-    CLKIN_DIVIDE_BY_2  => FALSE,                --  TRUE/FALSE to enable CLKIN divide by two feature
-    CLKIN_PERIOD       => 20.833000,            --  Specify period of input clock
-    CLKOUT_PHASE_SHIFT => "NONE",               --  Specify phase shift of "NONE", "FIXED" or "VARIABLE" 
-    CLK_FEEDBACK       => "1X",                 --  Specify clock feedback of "NONE", "1X" or "2X" 
-    DESKEW_ADJUST      => "SYSTEM_SYNCHRONOUS", -- "SOURCE_SYNCHRONOUS", "SYSTEM_SYNCHRONOUS" or
-    --     an integer from 0 to 15
-    DLL_FREQUENCY_MODE    => "LOW", -- "HIGH" or "LOW" frequency mode for DLL
-    DUTY_CYCLE_CORRECTION => TRUE,  --  Duty cycle correction, TRUE or FALSE
-    PHASE_SHIFT           => 0,     --  Amount of fixed phase shift from -255 to 255
-    STARTUP_WAIT          => TRUE)  --  Delay configuration DONE until DCM_SP LOCK, TRUE/FALSE
-    PORT
-    MAP(
-    CLK0 => clkfb, -- 0 degree DCM CLK ouptput
-    --        CLK180 => CLK180, -- 180 degree DCM CLK output
-    --        CLK270 => CLK270, -- 270 degree DCM CLK output
-    --        CLK2X => CLK2X,   -- 2X DCM CLK output
-    --        CLK2X180 => CLK2X180, -- 2X, 180 degree DCM CLK out
-    --        CLK90 => CLK90,   -- 90 degree DCM CLK output
-    --        CLKDV => CLKDV,   -- Divided DCM CLK out (CLKDV_DIVIDE)
-    CLKFX => sig_CLK, -- DCM CLK synthesis out (M/D)
-    --        CLKFX180 => CLKFX180, -- 180 degree CLK synthesis out
-    --        LOCKED => LOCKED, -- DCM LOCK status output
-    --        PSDONE => PSDONE, -- Dynamic phase adjust done output
-    --        STATUS => STATUS, -- 8-bit DCM status bits output
-    CLKFB => clkfb,   -- DCM clock feedback
-    CLKIN => pin_CLK, -- Clock input (from IBUFG, BUFG or DCM)
-    --        PSCLK => PSCLK,   -- Dynamic phase adjust clock input
-    --        PSEN => PSEN,     -- Dynamic phase adjust enable input
-    --        PSINCDEC => PSINCDEC, -- Dynamic phase adjust increment/decrement
-    RST => sig_RESET -- DCM asynchronous reset input
-    );
 
 END Behavioral;
