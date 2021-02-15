@@ -220,7 +220,7 @@ void APP_ReadFlags()
 {
     uint8_t flags = FPGA_ReadRegister(0);
     printf("Flags: 0x%02X\n", flags);
-    printf("  PIC32_WR_FIFO_OVF:   %i\n", (flags >> 7) & 0x01);
+    printf("  A16:                 %i\n", (flags >> 7) & 0x01);
     printf("  reserved:            %i\n", (flags >> 6) & 0x01);
     printf("  PIC32_WR_FIFO_FULL:  %i\n", (flags >> 5) & 0x01);
     printf("  PIC32_WR_FIFO_EMPTY: %i\n", (flags >> 4) & 0x01);
