@@ -49,15 +49,48 @@ extern "C" {
 // Section: Type Definitions
 // *****************************************************************************
 // *****************************************************************************
+#define CMD_WRITE_ADDRESS 0b00000000
+#define CMD_WRITE_DATA    0b00000001
+#define CMD_READ_DATA     0b00000010
+#define CMD_BANK_0        0b00000011
+#define CMD_BANK_1        0b00000100
 #define CMD_READ_DEBUG0   0b10000000
 #define CMD_READ_DEBUG1   0b10000001
 #define CMD_READ_DEBUG2   0b10000010
 #define CMD_READ_DEBUG3   0b10000011
-#define CMD_WRITE_ADDRESS 0b00000000
-#define CMD_WRITE_DATA    0b00000001
-#define CMD_READ_DATA     0b00000010
 
-#ifndef USE_PMP
+#define USE_PMP
+    
+#ifdef USE_PMP
+    
+/* Data Setup to Read/Write Strobe Wait States:
+ *   0b11 = 4 T(pb)
+ *   0b10 = 3 T(pb) 
+ *   0b01 = 2 T(pb)
+ *   0b00 = 1 T(pb) */
+#define WAITB 0b00 // 1 WS@48 MHz = 20.833 ns
+
+/* Data Read/Write Strobe Wait States 
+     0b1111 16 T(pb)
+     ...
+     0b0001 2 T(pb)
+     0b0000 1 T(pb) */
+#define WAITM 0b001 // 2 WS@48 MHz = 41.667 ns
+    
+/* Data Hold After Read/Write Strobe Wait States
+ *   write:
+ *     0b11 = 4 T(pb)
+ *     0b10 = 3 T(pb) 
+ *     0b01 = 2 T(pb)
+ *     0b00 = 1 T(pb) 
+ *   read:
+ *     0b11 = 3 T(pb)
+ *     0b10 = 2 T(pb) 
+ *     0b01 = 1 T(pb)
+ *     0b00 = 0 T(pb) */
+#define WAITE 0b00 // 1 WS@48 MHz = 20.833 ns (write), 0 WS read
+    
+#else
 //    RA3 -> A0
 //    RA4 -> A1
 //    RB13-> nRD
@@ -170,9 +203,17 @@ bool FPGA_ConfigurationIsBusy();
 FPGA_ERROR FPGA_ConfigurationBegin();
 void FPGA_ConfigurationEnd();
 void FPGA_Reset();
-void FPGA_WriteCommand(uint8_t cmd);
-void FPGA_WriteRegister(uint8_t reg, uint8_t value);
-uint8_t FPGA_ReadRegister(uint32_t reg);
+
+void inline FPGA_WriteCommand(uint8_t cmd);
+void inline FPGA_WriteRegister(uint8_t reg, uint8_t value);
+uint8_t inline FPGA_ReadRegister(uint32_t reg);
+
+uint16_t inline FPGA_ReadWord(uint16_t addr);
+void inline FPGA_WriteWord(uint16_t addr, uint16_t data);
+
+uint16_t inline FPGA_ReadData();
+void inline FPGA_WriteData(uint16_t data);
+void inline FPGA_WriteAddress(uint16_t addr);
 
 #endif /* _FPGA_H */
 

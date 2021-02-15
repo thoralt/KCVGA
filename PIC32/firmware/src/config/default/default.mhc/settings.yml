@@ -1,0 +1,13 @@
+configName: default
+folderName: ''
+format_version: v1.0
+frameworkPath: ../../../../MicrochipHarmony
+processor: PIC32MX250F128B
+projectName: ''
+settings:
+  PackageFilter: crypto;net;core;bootloader_apps_usb;bootloader;bsp;quick_docs;usb;csp;core_apps_pic32mx;csp_apps_pic32mx;
+  FORCE_OPTIMIZATION: 'false'
+  GENERATE_BACKUP: 'true'
+  CMSISPath: ./dev_packs/arm/CMSIS/5.7.0
+  MERGE_STRATEGY: USER_ALL
+  DFPPath: ./dev_packs/Microchip/PIC32MX_DFP/1.4.241/atdf/PIC32MX250F128B.atdf

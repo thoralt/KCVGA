@@ -1,0 +1,96 @@
+format_version: v1.0
+type: UniqueComponent
+attributes: {id: FreeRTOS}
+children:
+- type: Symbols
+  children:
+  - type: Integer
+    attributes: {id: FREERTOS_CPU_CLOCK_HZ}
+    children:
+    - type: Values
+      children:
+      - type: Dynamic
+        attributes: {id: FreeRTOS, value: '48000000'}
+  - type: Boolean
+    attributes: {id: FREERTOS_DAEMON_TASK_STARTUP_HOOK}
+    children:
+    - type: Values
+      children:
+      - type: Dynamic
+        attributes: {id: FreeRTOS, value: 'false'}
+      - type: User
+        attributes: {value: 'false'}
+  - type: Boolean
+    attributes: {id: FREERTOS_GENERATE_RUN_TIME_STATS}
+    children:
+    - type: Values
+      children:
+      - type: User
+        attributes: {value: 'false'}
+  - type: Boolean
+    attributes: {id: FREERTOS_INCLUDE_UXTASKGETSTACKHIGHWATERMARK}
+    children:
+    - type: Values
+      children:
+      - type: User
+        attributes: {value: 'false'}
+  - type: Integer
+    attributes: {id: FREERTOS_PERIPHERAL_CLOCK_HZ}
+    children:
+    - type: Values
+      children:
+      - type: Dynamic
+        attributes: {id: FreeRTOS, value: '48000000'}
+  - type: Integer
+    attributes: {id: FREERTOS_TIMER_QUEUE_LENGTH}
+    children:
+    - type: Values
+      children:
+      - type: Dynamic
+        attributes: {id: FreeRTOS, value: '0'}
+  - type: Integer
+    attributes: {id: FREERTOS_TIMER_TASK_PRIORITY}
+    children:
+    - type: Values
+      children:
+      - type: Dynamic
+        attributes: {id: FreeRTOS, value: '0'}
+      - type: User
+        attributes: {value: '3'}
+  - type: Integer
+    attributes: {id: FREERTOS_TIMER_TASK_STACK_DEPTH}
+    children:
+    - type: Values
+      children:
+      - type: Dynamic
+        attributes: {id: FreeRTOS, value: '0'}
+  - type: Integer
+    attributes: {id: FREERTOS_TOTAL_HEAP_SIZE}
+    children:
+    - type: Values
+      children:
+      - type: User
+        attributes: {value: '20480'}
+  - type: Boolean
+    attributes: {id: FREERTOS_USE_STATS_FORMATTING_FUNCTIONS}
+    children:
+    - type: Values
+      children:
+      - type: User
+        attributes: {value: 'false'}
+  - type: Boolean
+    attributes: {id: FREERTOS_USE_TIMERS}
+    children:
+    - type: Values
+      children:
+      - type: User
+        attributes: {value: 'false'}
+  - type: Boolean
+    attributes: {id: FREERTOS_USE_TRACE_FACILITY}
+    children:
+    - type: Values
+      children:
+      - type: User
+        attributes: {value: 'false'}
+- type: ElementPosition
+  attributes: {x: '320', y: '20', id: FreeRTOS}

@@ -112,17 +112,17 @@ void FPGA_Initialize(void) {
     fpgaData.state = FPGA_STATE_INIT;
 
 #ifdef USE_PMP
-    //    PMMODE = (1<<9) | 0b11111111; // MODE 0b10 Master mode 2, 1 middle wait state
-    //    PMAEN = 3; // use A0 and A1
-    //    PMCON  = (1<<15) | (1<<9) | (1<<8);
-    PMD6CLR = (1 << 16); // PMPMD = 0: deassert "PMP module disable"
-    IEC1CLR = 0x0004; // disable PMP interrupt
-    PMCON = 0x0000; // stop PMP
-
-    PMCONSET = 0x0300;
-    PMMODE = 0x02FF;
-    PMAEN = 0x0003;
-    PMCONSET = 0x8000; // enable PMP
+    PMD6CLR = (1 << 16);  // PMPMD = 0: deassert "PMP module disable"
+    IEC1CLR = 0x0004;     // disable PMP interrupt
+    PMCON = 0x0000;       // stop PMP
+    
+    PMCONSET = 0x0300;    // PTWREN=1, PTRDEN=1
+    PMMODE = (1<<9)       // MODE 0b10 Master mode 2
+           | (WAITB << 6) // Data Setup to Read/Write Strobe
+           | (WAITM << 2) // Data Read/Write Strobe
+           | (WAITE);     // Data Hold After Read/Write Strobe
+    PMAEN = 0x0003;       // use PMA0 and PMA1 as address pins
+    PMCONSET = 0x8000;    // enable PMP
 #else          
     TRISAbits.TRISA3 = 0;  // A0
     TRISAbits.TRISA4 = 0;  // A1
@@ -136,7 +136,7 @@ void FPGA_Initialize(void) {
 #endif
 }
 
-void FPGA_WriteRegister(uint8_t reg, uint8_t value) {
+void inline FPGA_WriteRegister(uint8_t reg, uint8_t value) {
 #ifdef USE_PMP
     while (PMMODE & 0x8000);
     PMADDR = reg;
@@ -146,14 +146,13 @@ void FPGA_WriteRegister(uint8_t reg, uint8_t value) {
     DATA_OUT();
     A(reg);
     DATA_WRITE(value);
-    wait_us(10);
     nWR(0);
-    wait_us(10);
+    wait_us(1);
     nWR(1);
 #endif
 }
 
-uint8_t FPGA_ReadRegister(uint32_t reg) {
+uint8_t inline FPGA_ReadRegister(uint32_t reg) {
     uint8_t u;
 #ifdef USE_PMP
     while (PMMODE & 0x8000);
@@ -165,18 +164,51 @@ uint8_t FPGA_ReadRegister(uint32_t reg) {
 #else
     DATA_IN();
     A(reg);
-    wait_us(10);
     nRD(0);
-    wait_us(10);
+    wait_us(1);
     u = DATA_READ();
-    wait_us(10);
     nRD(1);
 #endif
     return u;
 }
 
-void FPGA_WriteCommand(uint8_t cmd) {
+void inline FPGA_WriteCommand(uint8_t cmd) 
+{
     FPGA_WriteRegister(1, cmd);
+}
+
+void inline FPGA_WriteAddress(uint16_t addr)
+{
+    FPGA_WriteRegister(2, addr & 0xFF);
+    FPGA_WriteRegister(3, (addr >> 8) & 0xFF);
+    FPGA_WriteCommand(CMD_WRITE_ADDRESS);
+}
+
+void inline FPGA_WriteData(uint16_t data)
+{
+    FPGA_WriteRegister(2, data & 0xFF);
+    FPGA_WriteRegister(3, (data >> 8) & 0xFF);
+    FPGA_WriteCommand(CMD_WRITE_DATA);
+}
+
+uint16_t inline FPGA_ReadData()
+{
+    FPGA_WriteCommand(CMD_READ_DATA);
+    uint16_t u1 = FPGA_ReadRegister(2);
+    uint16_t u2 = FPGA_ReadRegister(3);
+    return u1 | (u2 << 8); 
+}
+
+void inline FPGA_WriteWord(uint16_t addr, uint16_t data)
+{
+    FPGA_WriteAddress(addr);
+    FPGA_WriteData(data);
+}
+
+uint16_t inline FPGA_ReadWord(uint16_t addr)
+{
+    FPGA_WriteAddress(addr);
+    return FPGA_ReadData();
 }
 
 /******************************************************************************
