@@ -41,8 +41,8 @@ ENTITY KCVGA IS PORT
 END KCVGA;
 
 ARCHITECTURE Behavioral OF KCVGA IS
-    SIGNAL sig_CLK_108MHZ, sig_RESET : STD_LOGIC;
-    SIGNAL sig_FRAMESYNC             : STD_LOGIC; -- start of frame from VGA module for screensaver
+    SIGNAL sig_CLK_108MHZ, sig_RESET, sig_CLK : STD_LOGIC;
+    SIGNAL sig_FRAMESYNC                      : STD_LOGIC; -- start of frame from VGA module for screensaver
 
     SIGNAL sig_PIC32_WR_FIFO_OUT   : STD_LOGIC_VECTOR (31 DOWNTO 0);
     SIGNAL sig_PIC32_WR_FIFO_IN    : STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -201,7 +201,7 @@ BEGIN
     i_KC_FIFO : ENTITY work.FIFO GENERIC
         MAP(
         RAM_WIDTH => 5,
-        RAM_DEPTH => 320
+        RAM_DEPTH => 512
         ) PORT
         MAP(
         clk     => sig_CLK_108MHZ,
@@ -240,7 +240,7 @@ BEGIN
     i_VGA_FIFO : ENTITY work.FIFO GENERIC
         MAP(
         RAM_WIDTH => 5,
-        RAM_DEPTH => 320
+        RAM_DEPTH => 512
         ) PORT
         MAP(
         clk     => sig_CLK_108MHZ,
@@ -281,6 +281,10 @@ BEGIN
     --     DEBUG              => sig_DEBUG_REGISTER
     --     );
 
+    -- force sig_CLK_108MHZ to use a BUFG for clock distribution
+    i_CLK_BUFG : BUFG PORT
+    MAP (I => sig_clk, O => sig_CLK_108MHZ);
+
     i_DCM_SP : DCM_SP
     GENERIC
     MAP(
@@ -307,7 +311,7 @@ BEGIN
     --        CLK2X180 => CLK2X180, -- 2X, 180 degree DCM CLK out
     --        CLK90 => CLK90,   -- 90 degree DCM CLK output
     --        CLKDV => CLKDV,   -- Divided DCM CLK out (CLKDV_DIVIDE)
-    CLKFX => sig_CLK_108MHZ, -- DCM CLK synthesis out (M/D)
+    CLKFX => sig_CLK, -- DCM CLK synthesis out (M/D)
     --        CLKFX180 => CLKFX180, -- 180 degree CLK synthesis out
     --        LOCKED => LOCKED, -- DCM LOCK status output
     --        PSDONE => PSDONE, -- Dynamic phase adjust done output
