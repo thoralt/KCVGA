@@ -14,15 +14,15 @@ include project.cfg
 ###########################################################################
 
 ifndef XILINX
-    $(error XILINX must be defined)
+	$(error XILINX must be defined)
 endif
 
 ifndef PROJECT
-    $(error PROJECT must be defined)
+	$(error PROJECT must be defined)
 endif
 
 ifndef TARGET_PART
-    $(error TARGET_PART must be defined)
+	$(error TARGET_PART must be defined)
 endif
 
 TOPLEVEL        ?= $(PROJECT)
@@ -56,21 +56,21 @@ XC3SPROG_OPTS   ?=
 ###########################################################################
 
 ifeq ($(OS),Windows_NT)
-    XILINX := $(shell cygpath -m $(XILINX))
-    CYG_XILINX := $(shell cygpath $(XILINX))
-    EXE := .exe
-    XILINX_PLATFORM ?= nt64
-    PATH := $(PATH):$(CYG_XILINX)/bin/$(XILINX_PLATFORM)
+	XILINX := $(shell cygpath -m $(XILINX))
+	CYG_XILINX := $(shell cygpath $(XILINX))
+	EXE := .exe
+	XILINX_PLATFORM ?= nt64
+	PATH := $(PATH):$(CYG_XILINX)/bin/$(XILINX_PLATFORM)
 else
-    EXE :=
-    XILINX_PLATFORM ?= lin64
-    PATH := $(PATH):$(XILINX)/bin/$(XILINX_PLATFORM)
+	EXE :=
+	XILINX_PLATFORM ?= lin64
+	PATH := $(PATH):$(XILINX)/bin/$(XILINX_PLATFORM)
 endif
 
 TEST_NAMES = $(foreach file,$(VTEST) $(VHDTEST),$(basename $(file)))
 TEST_EXES = $(foreach test,$(TEST_NAMES),build/isim_$(test)$(EXE))
 
-RUN = @echo -ne "\n\n\e[1;33m======== $(1) ========\e[m\n\n"; \
+RUN = @echo "\n\n\033[1;33m======== $(1) ========\033[m\n\n"; \
 	cd build && $(XILINX)/bin/$(XILINX_PLATFORM)/$(1)
 
 # isim executables don't work without this
@@ -104,30 +104,30 @@ build/$(PROJECT).scr: project.cfg
 	@mkdir -p build
 	@rm -f $@
 	@echo "run" \
-	    "-ifn $(PROJECT).prj" \
-	    "-ofn $(PROJECT).ngc" \
-	    "-ifmt mixed" \
-	    "$(XST_OPTS)" \
-	    "-top $(TOPLEVEL)" \
-	    "-ofmt NGC" \
-	    "-p $(TARGET_PART)" \
-	    > build/$(PROJECT).scr
+		"-ifn $(PROJECT).prj" \
+		"-ofn $(PROJECT).ngc" \
+		"-ifmt mixed" \
+		"$(XST_OPTS)" \
+		"-top $(TOPLEVEL)" \
+		"-ofmt NGC" \
+		"-p $(TARGET_PART)" \
+		> build/$(PROJECT).scr
 
 $(BITFILE): project.cfg $(VSOURCE) $(CONSTRAINTS) build/$(PROJECT).prj build/$(PROJECT).scr
 	@mkdir -p build
 	$(call RUN,xst) $(COMMON_OPTS) \
-	    -ifn $(PROJECT).scr
+		-ifn $(PROJECT).scr
 	$(call RUN,ngdbuild) $(COMMON_OPTS) $(NGDBUILD_OPTS) \
-	    -p $(TARGET_PART) -uc ../$(CONSTRAINTS) \
-	    $(PROJECT).ngc $(PROJECT).ngd
+		-p $(TARGET_PART) -uc ../$(CONSTRAINTS) \
+		$(PROJECT).ngc $(PROJECT).ngd
 	$(call RUN,map) $(COMMON_OPTS) $(MAP_OPTS) \
-	    -p $(TARGET_PART) \
-	    -w $(PROJECT).ngd -o $(PROJECT).map.ncd $(PROJECT).pcf
+		-p $(TARGET_PART) \
+		-w $(PROJECT).ngd -o $(PROJECT).map.ncd $(PROJECT).pcf
 	$(call RUN,par) $(COMMON_OPTS) $(PAR_OPTS) \
-	    -w $(PROJECT).map.ncd $(PROJECT).ncd $(PROJECT).pcf
+		-w $(PROJECT).map.ncd $(PROJECT).ncd $(PROJECT).pcf
 	$(call RUN,bitgen) $(COMMON_OPTS) $(BITGEN_OPTS) \
-	    -w $(PROJECT).ncd $(PROJECT).bit
-	@echo -ne "\e[1;32m======== OK ========\e[m\n"
+		-w $(PROJECT).ncd $(PROJECT).bit
+	@echo "\033[1;32m======== OK ========\033[m\n"
 
 
 ###########################################################################
@@ -136,15 +136,15 @@ $(BITFILE): project.cfg $(VSOURCE) $(CONSTRAINTS) build/$(PROJECT).prj build/$(P
 
 trace: project.cfg $(BITFILE)
 	$(call RUN,trce) $(COMMON_OPTS) $(TRACE_OPTS) \
-	    $(PROJECT).ncd $(PROJECT).pcf
+		$(PROJECT).ncd $(PROJECT).pcf
 
 test: $(TEST_EXES)
 
 build/isim_%$(EXE): build/$(PROJECT)_sim.prj $(VSOURCE) $(VHDSOURCE) $(VTEST) $(VHDTEST)
 	$(call RUN,fuse) $(COMMON_OPTS) $(FUSE_OPTS) \
-	    -prj $(PROJECT)_sim.prj \
-	    -o isim_$*$(EXE) \
-	    work.$* work.glbl
+		-prj $(PROJECT)_sim.prj \
+		-o isim_$*$(EXE) \
+		work.$* work.glbl
 
 isim: build/isim_$(TB)$(EXE)
 	@grep --no-filename --no-messages 'ISIM:' $(TB).{v,vhd} | cut -d: -f2 > build/isim_$(TB).cmd
